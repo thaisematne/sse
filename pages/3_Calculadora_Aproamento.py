@@ -67,7 +67,7 @@ if st.button("Executar Análise de Clash", type="primary"):
     
     for eq, (x, y) in equipamentos_locais.items():
         # Matriz de rotação para superfície
-        x_sup = x * np.cos(H_rad) + y * np.np.sin(H_rad)
+        x_sup = x * np.cos(H_rad) + y * np.sin(H_rad)
         y_sup = -x * np.sin(H_rad) + y * np.cos(H_rad)
         posicoes_superficie[eq] = np.array([x_sup, y_sup, 0])
         
