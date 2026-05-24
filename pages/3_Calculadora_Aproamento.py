@@ -2,63 +2,62 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Plano de Clash 2D", layout="wide")
-st.title("Módulo 3: Plano de Clash 2D (Skandi Santos)")
+st.set_page_config(page_title="Plano de Clash 2D com Deriva", layout="wide")
+st.title("Módulo 3: Plano de Clash 2D (Com Deriva e LDA)")
 
-# --- Configurações (Mantendo a estrutura anterior) ---
-with st.expander("⚙️ Controle Dimensional"):
+# --- 1. Configurações Dimensionais ---
+with st.expander("⚙️ Controle Dimensional (Navio)"):
     col_d1, col_d2 = st.columns(2)
-    x_xlx23 = col_d1.number_input("X - ROV XLX-23", value=5.0)
-    y_xlx23 = col_d1.number_input("Y - ROV XLX-23", value=15.0)
-    x_xlx24 = col_d2.number_input("X - ROV XLX-24", value=-5.0)
-    y_xlx24 = col_d2.number_input("Y - ROV XLX-24", value=15.0)
-    x_umb = col_d1.number_input("X - Umbilical", value=0.0)
-    y_umb = col_d1.number_input("Y - Umbilical", value=0.0)
-    x_crane = col_d2.number_input("X - Guindaste", value=-10.0)
-    y_crane = col_d2.number_input("Y - Guindaste", value=-20.0)
+    x_eq = {"XLX-23": [col_d1.number_input("X - ROV XLX-23", value=5.0), col_d1.number_input("Y - ROV XLX-23", value=15.0)],
+            "XLX-24": [col_d2.number_input("X - ROV XLX-24", value=-5.0), col_d2.number_input("Y - ROV XLX-24", value=15.0)],
+            "Umbilical": [col_d1.number_input("X - Umbilical", value=0.0), col_d1.number_input("Y - Umbilical", value=0.0)],
+            "Guindaste": [col_d2.number_input("X - Guindaste", value=-10.0), col_d2.number_input("Y - Guindaste", value=-20.0)]}
 
-equipamentos = {
-    "ROV XLX-23": (x_xlx23, y_xlx23, "orange"),
-    "ROV XLX-24": (x_xlx24, y_xlx24, "red"),
-    "Umbilical": (x_umb, y_umb, "blue"),
-    "Guindaste": (x_crane, y_crane, "green")
-}
+# --- 2. Parâmetros de Operação ---
+col_op1, col_op2 = st.columns(2)
+aproamento = col_op1.slider("Aproamento do Navio (°)", 0, 359, 0)
+lda = col_op2.number_input("Lâmina D'água (m)", value=2000.0)
 
-aproamento = st.slider("Aproamento do Navio (°)", 0, 359, 0)
-st.divider()
+st.subheader("Configuração da Deriva por Equipamento")
+derivas = {}
+cols = st.columns(4)
+for i, (nome, pos) in enumerate(x_eq.items()):
+    with cols[i]:
+        st.markdown(f"**{nome}**")
+        d = st.number_input(f"Dist. Deriva (m) {nome}", value=0.0, key=f"dist_{nome}")
+        dir_ = st.number_input(f"Dir. (°) {nome}", value=0.0, key=f"dir_{nome}")
+        derivas[nome] = (d, np.radians(dir_))
 
-if st.button("Gerar Plano 2D de Segurança", type="primary"):
+if st.button("Atualizar Plano de Clash", type="primary"):
     fig = go.Figure()
-    H_rad = np.radians(aproamento)
+    H = np.radians(aproamento)
     
-    # 1. Desenhar silhueta do Navio (Simples retângulo)
-    # Ajuste estes valores conforme as dimensões reais do Skandi Santos
-    comp = 100 
-    larg = 20
-    navio_x = [-larg/2, larg/2, larg/2, -larg/2, -larg/2]
-    navio_y = [-comp/2, -comp/2, comp/2, comp/2, -comp/2]
-    
-    # Rotacionar silhueta
-    n_x_rot = [x*np.cos(H_rad) + y*np.sin(H_rad) for x, y in zip(navio_x, navio_y)]
-    n_y_rot = [-x*np.sin(H_rad) + y*np.cos(H_rad) for x, y in zip(navio_x, navio_y)]
-    
-    fig.add_trace(go.Scatter(x=n_x_rot, y=n_y_rot, fill="toself", fillcolor="lightgray", line=dict(color="black"), name="Navio"))
+    # Desenhar Navio Rotacionado
+    navio = [[-10, -50], [10, -50], [10, 50], [-10, 50], [-10, -50]]
+    nx = [x*np.cos(H) + y*np.sin(H) for x, y in navio]
+    ny = [-x*np.sin(H) + y*np.cos(H) for x, y in navio]
+    fig.add_trace(go.Scatter(x=nx, y=ny, fill="toself", fillcolor="lightgray", name="Navio"))
 
-    # 2. Plotar Equipamentos e Safety Zones
-    for nome, (x, y, cor) in equipamentos.items():
-        x_rot = x * np.cos(H_rad) + y * np.sin(H_rad)
-        y_rot = -x * np.sin(H_rad) + y * np.cos(H_rad)
+    # Plotar cada equipamento
+    for nome, (xi, yi) in x_eq.items():
+        # Ponto superfície (rotacionado)
+        xs = xi*np.cos(H) + yi*np.sin(H)
+        ys = -xi*np.sin(H) + yi*np.cos(H)
         
-        # Ponto do equipamento
-        fig.add_trace(go.Scatter(x=[x_rot], y=[y_rot], mode='markers+text', name=nome, marker=dict(size=12, color=cor), text=[nome], textposition="top center"))
+        # Ponto fundo (superfície + deriva)
+        d, ang = derivas[nome]
+        xf = xs + d * np.sin(ang)
+        yf = ys + d * np.cos(ang)
         
-        # Círculo de 10m (Safety Zone)
-        theta = np.linspace(0, 2*np.pi, 100)
+        # Desenhar linha do cabo (plano XY)
+        fig.add_trace(go.Scatter(x=[xs, xf], y=[ys, yf], mode='lines+markers', name=nome))
+        
+        # Desenhar Zona de Segurança de 10m no Dive Point (fundo)
+        theta = np.linspace(0, 2*np.pi, 50)
         fig.add_trace(go.Scatter(
-            x=x_rot + 10 * np.cos(theta),
-            y=y_rot + 10 * np.sin(theta),
-            mode='lines', line=dict(color=cor, dash='dash'), name=f"Safety {nome}", fill='toself', fillcolor=f"rgba({cor}, 0.1)"
+            x=xf + 10*np.cos(theta), y=yf + 10*np.sin(theta),
+            mode='lines', line=dict(dash='dash'), name=f"Safety {nome}", fill='toself', opacity=0.3
         ))
 
-    fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1), height=800, template="plotly_white", title="Plano 2D: Risco de Clash (Raio 10m)")
+    fig.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1), height=800, template="plotly_white")
     st.plotly_chart(fig, use_container_width=True)
