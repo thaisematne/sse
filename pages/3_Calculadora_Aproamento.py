@@ -5,17 +5,20 @@ import plotly.graph_objects as go
 st.set_page_config(page_title="Plano de Clash 2D Completo", layout="wide")
 st.title("Módulo 3: Plano Tático de Segurança (Com Deriva e LDA)")
 
-# --- 1. Configurações de Offset (Navio) ---
-with st.expander("⚙️ Controle Dimensional"):
+# --- 1. Configurações de Offset ---
+with st.expander("⚙️ Controle Dimensional - Posições no Convés"):
     col_d1, col_d2 = st.columns(2)
-    # ROVs
     x_xlx23 = col_d1.number_input("X - ROV XLX-23", value=5.0)
     y_xlx23 = col_d1.number_input("Y - ROV XLX-23", value=-10.0)
+    
     x_xlx24 = col_d2.number_input("X - ROV XLX-24", value=-5.0)
     y_xlx24 = col_d2.number_input("Y - ROV XLX-24", value=-10.0)
-    # Umbilical (Fixo)
-    x_umb, y_umb = 5.0, 15.0
-    st.info(f"Umbilical de Controle fixado em: X={x_umb}, Y={y_umb}")
+    
+    x_umb = col_d1.number_input("X - Umbilical de Controle", value=5.0)
+    y_umb = col_d1.number_input("Y - Umbilical de Controle", value=15.0)
+    
+    x_crane = col_d2.number_input("X - Guindaste", value=-10.0)
+    y_crane = col_d2.number_input("Y - Guindaste", value=-20.0)
 
 # --- 2. Parâmetros de Operação ---
 col_op1, col_op2 = st.columns(2)
@@ -24,12 +27,12 @@ lda = col_op2.number_input("Lâmina D'água (m)", value=2000.0)
 
 st.subheader("Configuração da Deriva")
 derivas = {}
-cols = st.columns(3)
-for i, nome in enumerate(["XLX-23", "XLX-24", "Umbilical"]):
+cols = st.columns(4)
+for i, nome in enumerate(["XLX-23", "XLX-24", "Umbilical", "Guindaste"]):
     with cols[i]:
         st.markdown(f"**{nome}**")
-        d = st.number_input(f"Dist. Deriva (m)", value=0.0, key=f"dist_{nome}")
-        dir_ = st.number_input(f"Dir. (°) {nome}", value=0.0, key=f"dir_{nome}")
+        d = st.number_input(f"Dist. (m)", value=0.0, key=f"dist_{nome}")
+        dir_ = st.number_input(f"Dir. (°)", value=0.0, key=f"dir_{nome}")
         derivas[nome] = (d, np.radians(dir_))
 
 if st.button("Atualizar Plano de Clash", type="primary"):
@@ -42,16 +45,21 @@ if st.button("Atualizar Plano de Clash", type="primary"):
     ny = [-x*np.sin(H) + y*np.cos(H) for x, y in navio]
     fig.add_trace(go.Scatter(x=nx, y=ny, fill="toself", fillcolor="lightgray", name="Skandi Santos"))
 
-    # Plotar equipamentos (Superfície + Fundo/Dive Point)
-    cores = {"XLX-23": "orange", "XLX-24": "red", "Umbilical": "blue"}
+    # Dicionário atualizado com o Guindaste incluído
+    equip_coords = {
+        "XLX-23": (x_xlx23, y_xlx23),
+        "XLX-24": (x_xlx24, y_xlx24),
+        "Umbilical": (x_umb, y_umb),
+        "Guindaste": (x_crane, y_crane)
+    }
+    
+    cores = {"XLX-23": "orange", "XLX-24": "red", "Umbilical": "blue", "Guindaste": "green"}
     theta = np.linspace(0, 2*np.pi, 50)
     
-    for nome, (xi, yi) in {"XLX-23": (x_xlx23, y_xlx23), "XLX-24": (x_xlx24, y_xlx24), "Umbilical": (x_umb, y_umb)}.items():
-        # Superfície (rotacionado)
+    for nome, (xi, yi) in equip_coords.items():
         xs = xi*np.cos(H) + yi*np.sin(H)
         ys = -xi*np.sin(H) + yi*np.cos(H)
         
-        # Fundo (superfície + deriva)
         d, ang = derivas[nome]
         xf = xs + d * np.sin(ang)
         yf = ys + d * np.cos(ang)
@@ -59,7 +67,7 @@ if st.button("Atualizar Plano de Clash", type="primary"):
         # Cabo
         fig.add_trace(go.Scatter(x=[xs, xf], y=[ys, yf], mode='lines+markers', name=nome, line=dict(color=cores[nome])))
         
-        # Safety Zone (Dive Point no fundo)
+        # Safety Zone (5m)
         fig.add_trace(go.Scatter(
             x=xf + 5*np.cos(theta), y=yf + 5*np.sin(theta),
             mode='lines', line=dict(color=cores[nome], dash='dash'), name=f"Safety {nome}", fill='toself', opacity=0.3
