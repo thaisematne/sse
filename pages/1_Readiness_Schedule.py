@@ -4,8 +4,20 @@ import json
 import os
 import uuid
 
-st.set_page_config(page_title="Previsão de Prontidão", layout="wide")
-st.title("Módulo 1: Previsão Otimista de Prontidão")
+st.set_page_config(
+    page_title="Readiness Schedule | Subsea Planner Pro", 
+    page_icon="⚓", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Inserção da Logo na Sidebar (Menu Lateral)
+st.sidebar.markdown("## 🔴 AKOFS Offshore")
+st.sidebar.markdown("---")
+
+st.title("Subsea Planner Pro")
+st.markdown("### Module 1: Readiness Schedule")
+st.divider()
 
 ARQUIVO_DADOS = "dados_prontidao.json"
 
