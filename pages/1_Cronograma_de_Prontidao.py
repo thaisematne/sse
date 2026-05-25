@@ -84,13 +84,16 @@ st.markdown(
             margin: 8mm 12mm 8mm 12mm;
         }
         
-        /* Ocultar Interface e o Formulário de Cadastro de Etapas */
+        /* Ocultar Interface, Formulário de Cadastro e a COLUNA DE AÇÕES */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         .stButton, 
         iframe,
         div[data-testid="stNotification"],
-        .no-print { 
+        .no-print,
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(6),
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(7),
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(8) { 
             display: none !important; 
         }
         
@@ -159,6 +162,32 @@ st.markdown(
         hr {
             margin: 5px 0 !important;
             border-color: #000000 !important;
+        }
+
+        /* ==========================================
+           DESTAQUE MÁXIMO DO RESUMO OPERACIONAL NA IMPRESSÃO
+           ========================================== */
+        div[data-testid="stMetric"] {
+            border: 2px solid #000000 !important;
+            background-color: #F5F5F5 !important; /* Fundo cinza claro para destaque total */
+            padding: 12px !important;
+            border-radius: 6px !important;
+            text-align: center !important;
+            box-shadow: none !important;
+        }
+        div[data-testid="stMetric"] * {
+            background-color: transparent !important;
+        }
+        div[data-testid="stMetricValue"] div {
+            font-size: 22pt !important; /* Tamanho massivo para o dado mais importante */
+            font-weight: 800 !important;
+            color: #D32F2F !important; /* Mantém o vermelho AKOFS em destaque */
+        }
+        div[data-testid="stMetricLabel"] div {
+            font-size: 11pt !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
         }
     }
     </style>
