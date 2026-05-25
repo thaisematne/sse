@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Função para converter a imagem em Base64 (garante a exibição correta na impressão)
+# Função para converter a imagem em Base64
 def obter_base64_imagem(caminho_img):
     with open(caminho_img, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
@@ -53,7 +53,7 @@ else:
     st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
     st.markdown("### Cronograma de Prontidão")
 
-# --- REGRAS DE ESTILO CSS AVANÇADAS (RESET DE CORES PARA A4) ---
+# --- REGRAS DE ESTILO CSS AVANÇADAS (BLINDAGEM CONTRA FUNDO ESCURO) ---
 st.markdown(
     """
     <style>
@@ -74,7 +74,20 @@ st.markdown(
        REGRA DE OURO: ESTILOS EXCLUSIVOS DE IMPRESSÃO
        ========================================== */
     @media print {
-        /* Ocultar elementos de interface do Streamlit */
+        /* Força o navegador a renderizar as cores exatas do CSS de impressão */
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color: #000000 !important; /* TODO o texto fica preto */
+        }
+        
+        /* Configuração de folha Paisagem (Landscape) */
+        @page {
+            size: A4 landscape;
+            margin: 10mm 15mm;
+        }
+        
+        /* Ocultar elementos de interface */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         .stButton, 
@@ -83,49 +96,35 @@ st.markdown(
             display: none !important; 
         }
         
-        /* Forçar fundo branco e texto escuro em toda a página */
-        .main, .block-container, body, html, [data-testid="stAppViewContainer"], .stApp {
+        /* FORÇA BRUTA contra fundos pretos do Streamlit */
+        html, body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"],
+        div[data-baseweb="input"], div[data-baseweb="base-input"],
+        div[data-testid="stMetric"], div[data-testid="stVerticalBlock"] {
             background-color: #FFFFFF !important;
-            color: #000000 !important;
+            background: #FFFFFF !important;
         }
         
-        /* Forçar todos os textos, títulos e labels para preto */
-        h1, h2, h3, h4, h5, h6, p, label, smal, span, div {
-            color: #000000 !important;
-        }
-        
-        /* Ajustar os campos de texto para formato de relatório impresso (sem caixas pretas) */
-        input, select, textarea, div[data-testid="stTextInput"] div {
+        /* Ajustar os campos de texto para não parecerem botões/caixas pretas */
+        input, select, textarea {
             background-color: transparent !important;
-            color: #000000 !important;
             border: none !important;
-            border-bottom: 1px dashed #666 !important; /* Transforma caixas em linhas elegantes de relatório */
+            border-bottom: 1px dashed #999 !important;
             box-shadow: none !important;
+            padding: 2px !important;
         }
         
-        /* Configuração estrita da folha A4 para evitar quebra de página */
-        @page {
-            size: A4 portrait;
-            margin: 10mm 12mm 10mm 12mm;
-        }
-        
-        /* Compactar o layout ao máximo para garantir que caiba em uma única página */
+        /* Layout mais esparso e organizado para folha deitada */
         .block-container {
             padding-top: 0rem !important;
-            padding-bottom: 0rem !important;
         }
         .print-header {
             display: flex !important;
             border-bottom: 2px solid #000000 !important;
-            margin-bottom: 15px !important;
+            margin-bottom: 20px !important;
+            background: #FFFFFF !important;
         }
         div[data-testid="stHorizontalBlock"] {
-            gap: 5px !important;
-            margin-bottom: 0px !important;
-        }
-        hr {
-            margin: 8px 0 !important;
-            border-color: #000000 !important;
+            gap: 10px !important;
         }
     }
     </style>
@@ -328,7 +327,6 @@ if st.session_state.db["programacao"]:
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
     
     with col_btn1:
-        # Aciona a impressão diretamente na página mãe sem abrir novas abas
         components.html(
             f"""
             <button onclick="window.parent.print()" style="
