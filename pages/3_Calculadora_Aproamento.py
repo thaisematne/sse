@@ -22,7 +22,7 @@ with st.expander("⚙️ Controle Dimensional - Posições no Convés (As-Built)
 
 # --- 2. Painel Principal de Operação ---
 st.markdown("### Parâmetros Dinâmicos da Operação")
-st.info("Simule a influência da proa e da correnteza no tether management durante a docagem no BAP.")
+st.info("Simule a influência da proa e da correnteza no tether management e disposição de cabos na LDA.")
 
 col_op1, col_op2, col_op3 = st.columns([2, 1, 1])
 aproamento = col_op1.slider("Aproamento do Skandi Santos (°)", 0, 359, 0)
@@ -48,9 +48,12 @@ equip_coords = {
 }
 
 pos_fundo = {}
+pos_superficie = {}
 for nome, (xi, yi) in equip_coords.items():
     xs = xi*np.cos(H) + yi*np.sin(H)
     ys = -xi*np.sin(H) + yi*np.cos(H)
+    pos_superficie[nome] = (xs, ys)
+    
     d, ang = derivas[nome]
     pos_fundo[nome] = (xs + d * np.sin(ang), ys + d * np.cos(ang))
 
@@ -76,9 +79,7 @@ with tab1:
     fig1.add_trace(go.Scatter(x=nx, y=ny, fill="toself", fillcolor="lightgray", line=dict(color="black"), name="Skandi Santos"))
 
     for nome in equip_coords.keys():
-        xi, yi = equip_coords[nome]
-        xs = xi*np.cos(H) + yi*np.sin(H)
-        ys = -xi*np.sin(H) + yi*np.cos(H)
+        xs, ys = pos_superficie[nome]
         xf, yf = pos_fundo[nome]
         
         fig1.add_trace(go.Scatter(x=[xs, xf], y=[ys, yf], mode='lines+markers', name=nome, line=dict(color=cores[nome])))
@@ -104,21 +105,36 @@ with tab2:
     if st.button("Simular Manobra Subsea", type="primary"):
         fig2 = go.Figure()
         
-        # 1. Desenhar a Sombra do Navio (Referência da Superfície)
-        fig2.add_trace(go.Scatter(x=nx, y=ny, fill="toself", fillcolor="rgba(200, 200, 200, 0.2)", line=dict(color="lightgray", dash="dash"), name="Sombra do Navio (Sup.)", hoverinfo="skip"))
+        # 1. Desenhar a Sombra do Navio
+        fig2.add_trace(go.Scatter(x=nx, y=ny, fill="toself", fillcolor="rgba(200, 200, 200, 0.2)", line=dict(color="lightgray", dash="dash"), name="Sombra do Navio", hoverinfo="skip"))
         
+        # 2. Plotar Dive Points e Umbilical de Controle
+        for nome in ["XLX-23", "XLX-24", "Umbilical"]:
+            xs, ys = pos_superficie[nome]
+            xf, yf = pos_fundo[nome]
+            cor = cores[nome]
+            
+            # Marcação do Dive Point (Superfície)
+            fig2.add_trace(go.Scatter(x=[xs], y=[ys], mode='markers+text', marker=dict(size=10, symbol="x", color=cor, line=dict(width=2)), name=f"DP {nome}", text=[f"DP {nome}"], textposition="top right"))
+            
+            # Linha de descida do cabo na água (Superfície -> Fundo)
+            fig2.add_trace(go.Scatter(x=[xs, xf], y=[ys, yf], mode='lines', line=dict(color=cor, width=1, dash='solid'), name=f"Cabo {nome}", opacity=0.4))
+            
+            # Se for o Umbilical, desenha ele no fundo com seu Safety Zone
+            if nome == "Umbilical":
+                fig2.add_trace(go.Scatter(x=[xf], y=[yf], mode='markers+text', marker=dict(size=12, symbol="circle", color=cor), name="Umbilical (Fundo)", text=["Umbilical na Água"], textposition="bottom center"))
+                fig2.add_trace(go.Scatter(x=xf + 5*np.cos(theta), y=yf + 5*np.sin(theta), mode='lines', line=dict(color=cor, dash='dash'), name=f"Safety Umbilical", fill='toself', opacity=0.1))
+
+        # 3. Desenhar o BAP Geométrico
         x_eq, y_eq = pos_fundo["Guindaste"]
         eq_rad = np.radians(eq_heading)
+        dim_eq = 4.0
         
-        # 2. Desenhar o BAP Geométrico
-        dim_eq = 4.0 # Tamanho base do BAP
         box = [[-dim_eq/2, -dim_eq/2], [dim_eq/2, -dim_eq/2], [dim_eq/2, dim_eq/2], [-dim_eq/2, dim_eq/2], [-dim_eq/2, -dim_eq/2]]
         bx = [x_eq + (x*np.cos(eq_rad) + y*np.sin(eq_rad)) for x, y in box]
         by = [y_eq + (-x*np.sin(eq_rad) + y*np.cos(eq_rad)) for x, y in box]
-        
         fig2.add_trace(go.Scatter(x=bx, y=by, fill="toself", fillcolor="lightgreen", line=dict(color="darkgreen", width=3), name="BAP"))
         
-        # Textos das Faces do BAP
         faces = [("F1", 0), ("F2", np.pi/2), ("F3", np.pi), ("F4", -np.pi/2)]
         for nome_face, ang_offset in faces:
             f_ang = eq_rad + ang_offset
@@ -126,7 +142,7 @@ with tab2:
             fy = y_eq + (dim_eq/2 + 1.2) * np.cos(f_ang)
             fig2.add_trace(go.Scatter(x=[fx], y=[fy], mode="text", text=[nome_face], textfont=dict(color="darkgreen", size=12, weight="bold"), showlegend=False))
 
-        # 3. Posições e Rotações dos ROVs (Shape de Retângulo Direcional)
+        # 4. Posições e Rotações dos ROVs (Shape de Retângulo Direcional)
         dist_docagem = dim_eq/2 + 2.0 
         dist_obs = dim_eq/2 + 5.0     
         
@@ -137,17 +153,14 @@ with tab2:
         pos_rovs_fundo = {}
         heading_rov = {}
         
-        # Principal na Face 1
         pos_rovs_fundo[rov_principal] = (x_eq + dist_docagem * np.sin(ang_f1), y_eq + dist_docagem * np.cos(ang_f1))
-        heading_rov[rov_principal] = ang_f1 + np.pi # ROV aponta para o BAP (inverso da Face)
+        heading_rov[rov_principal] = ang_f1 + np.pi 
         
-        # Obs na Face 2 ou 4
         ang_obs = ang_f2 if "Face 2" in face_obs else ang_f4
         pos_rovs_fundo[rov_obs] = (x_eq + dist_obs * np.sin(ang_obs), y_eq + dist_obs * np.cos(ang_obs))
         heading_rov[rov_obs] = ang_obs + np.pi
 
-        # 4. Plotar TMS, Tethers e ROVs
-        # Shape do ROV (Retângulo 3x2m com um "bico" mostrando a frente)
+        # 5. Plotar TMS, Tethers e ROVs
         rov_shape = [[-1.5, -1], [1.5, -1], [1.5, 0.5], [0, 1.5], [-1.5, 0.5], [-1.5, -1]]
 
         for rov in ["XLX-23", "XLX-24"]:
@@ -156,21 +169,21 @@ with tab2:
             rov_x, rov_y = pos_rovs_fundo[rov]
             h_rov = heading_rov[rov]
             
-            # TMS (Quadrado)
+            # TMS
             fig2.add_trace(go.Scatter(x=[tms_x], y=[tms_y], mode='markers+text', marker=dict(size=14, symbol="square-open", color=cor, line=dict(width=3)), name=f"TMS {rov}", text=[f"TMS {rov}"], textposition="top center"))
             
-            # Desenhar o ROV Rotacionado
+            # ROV Rotacionado
             rx_rot = [rov_x + (x*np.cos(h_rov) + y*np.sin(h_rov)) for x, y in rov_shape]
             ry_rot = [rov_y + (-x*np.sin(h_rov) + y*np.cos(h_rov)) for x, y in rov_shape]
             fig2.add_trace(go.Scatter(x=rx_rot, y=ry_rot, fill="toself", fillcolor=cor, line=dict(color="black"), name=f"ROV {rov}", hoverinfo="name"))
             
-            # Tether (Linha Pontilhada do TMS ao centro do ROV)
+            # Tether (TMS -> ROV)
             fig2.add_trace(go.Scatter(x=[tms_x, rov_x], y=[tms_y, rov_y], mode='lines', line=dict(color=cor, width=2, dash='dot'), name=f"Tether {rov}"))
 
         fig2.update_layout(
             yaxis=dict(scaleanchor="x", scaleratio=1), 
-            height=800, 
+            height=850, 
             template="plotly_white", 
-            title="Análise de Tether Management: Sombra do Navio vs. BAP vs. ROVs"
+            title="Análise de Tether Management (Com Dive Points e Umbilical na LDA)"
         )
         st.plotly_chart(fig2, use_container_width=True)
