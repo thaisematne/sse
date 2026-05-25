@@ -1,4 +1,5 @@
 import streamlit as st
+import pandas as pd  # <--- A biblioteca de tabelas adicionada aqui
 import os
 from PIL import Image
 
