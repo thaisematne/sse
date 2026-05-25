@@ -39,9 +39,9 @@ if "Outros" not in st.session_state.db["base_etapas"]:
 if "Limpeza" not in st.session_state.db["base_etapas"]:
     st.session_state.db["base_etapas"].insert(-2, "Limpeza")
 
-# Função inteligente para converter texto HH:MM em números
 def parse_tempo(tempo_str):
     try:
+        tempo_str = str(tempo_str).strip()
         if ":" in tempo_str:
             partes = tempo_str.split(":")
             return int(partes[0]), int(partes[1])
@@ -109,26 +109,5 @@ if st.session_state.db["programacao"]:
     st.subheader("📋 Programação Atual")
     st.info("💡 **Edite os textos livremente**. Digite o tempo como HH:MM e use as setas para reordenar.")
 
-    # Cabeçalho da Lista
     hc1, hc2, hc3, hc4, hc5, hc_acoes = st.columns([0.4, 2, 3, 1.5, 1.2, 1.5])
     hc1.write("**#**")
-    hc2.write("**Locação**")
-    hc3.write("**Etapa**")
-    hc4.write("**Responsável**")
-    hc5.write("**Tempo**")
-    hc_acoes.write("**Ações**")
-
-    # Função de salvamento de texto normal
-    def atualizar_campo(index, campo, chave_widget):
-        st.session_state.db["programacao"][index][campo] = st.session_state[chave_widget]
-        salvar_dados(st.session_state.db)
-
-    # Função de salvamento específico para o campo de Tempo
-    def atualizar_tempo(index, chave_widget):
-        h, m = parse_tempo(st.session_state[chave_widget])
-        st.session_state.db["programacao"][index]["Horas"] = h
-        st.session_state.db["programacao"][index]["Minutos"] = m
-        salvar_dados(st.session_state.db)
-
-    # Renderiza as etapas com os botões ao lado
-    for idx, item in enumerate(st.session_state.db["
