@@ -1,4 +1,5 @@
 import streamlit as st
+import streamlit.components.v1 as components
 import datetime
 import json
 import os
@@ -223,44 +224,43 @@ if st.session_state.db["programacao"]:
 
     st.divider()
     
+    # Injetar CSS global para limpar a tela durante a impressão
+    st.markdown(
+        """
+        <style>
+        @media print {
+            section[data-testid="stSidebar"] { display: none !important; }
+            header[data-testid="stHeader"] { display: none !important; }
+            .stButton { display: none !important; }
+            iframe { display: none !important; } /* Esconde o botão HTML de imprimir */
+        }
+        </style>
+        """,
+        unsafe_allow_html=True
+    )
+    
     # Linha de botões finais
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
     
     with col_btn1:
-        # Botão personalizado com CSS e JS para imprimir/salvar PDF nativo
-        st.markdown(
+        # Usando um componente HTML real para acionar a impressão na janela mãe
+        components.html(
             f"""
-            <a href="javascript:window.print()" class="btn-print">
-                🖨️ Imprimir / Salvar PDF
-            </a>
-            <style>
-            .btn-print {{
-                display: inline-flex;
-                align-items: center;
-                justify-content: center;
+            <button onclick="window.parent.print()" style="
                 background-color: {AKOFS_RED};
-                color: white !important;
+                color: white;
                 padding: 0.5rem 1rem;
-                text-decoration: none;
+                border: none;
                 border-radius: 0.5rem;
                 font-weight: 600;
                 width: 100%;
-                text-align: center;
-                font-family: "Source Sans Pro", sans-serif;
-            }}
-            .btn-print:hover {{
-                background-color: #b71c1c;
-            }}
-            /* Magia para limpar a tela na hora de imprimir o PDF */
-            @media print {{
-                section[data-testid="stSidebar"] {{ display: none !important; }}
-                header[data-testid="stHeader"] {{ display: none !important; }}
-                .btn-print {{ display: none !important; }}
-                .stButton {{ display: none !important; }}
-            }}
-            </style>
+                cursor: pointer;
+                font-family: 'Source Sans Pro', sans-serif;
+                font-size: 1rem;
+                box-sizing: border-box;
+            ">🖨️ Imprimir / Salvar PDF</button>
             """,
-            unsafe_allow_html=True
+            height=45
         )
 
     with col_btn2:
