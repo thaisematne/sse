@@ -41,7 +41,7 @@ if os.path.exists(logo_path):
     <div class="print-header">
         <img src="data:image/png;base64,{logo_base64}" class="print-logo-img">
         <div class="print-header-text">
-            <h1 style="color: {AKOFS_RED}; margin: 0; font-size: 2.2em;">Subsea Planner Pro</h1>
+            <h1 style="color: {AKOFS_RED}; margin: 0;">Subsea Planner Pro</h1>
             <h3 style="margin: 5px 0 0 0; font-weight: normal; color: #aaa;">Cronograma de Prontidão</h3>
         </div>
     </div>
@@ -67,6 +67,9 @@ st.markdown(
         height: 55px;
         margin-right: 20px;
     }
+    .print-header-text h1 {
+        font-size: 2.2em;
+    }
     
     /* ==========================================
        ESTILOS EXCLUSIVOS DE IMPRESSÃO (A4 VERTICAL)
@@ -84,7 +87,7 @@ st.markdown(
             margin: 8mm 12mm 8mm 12mm;
         }
         
-        /* Ocultar Interface, Formulário de Cadastro e a COLUNA DE AÇÕES */
+        /* Ocultar Interface, Subtítulos de marcação e a COLUNA DE AÇÕES */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         .stButton, 
@@ -95,6 +98,11 @@ st.markdown(
         div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(7),
         div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(8) { 
             display: none !important; 
+        }
+
+        /* Oculta as linhas de formulário de cadastro (que contém o Selectbox da Etapa) */
+        div[data-testid="stHorizontalBlock"]:has(div[data-testid="stSelectbox"]) {
+            display: none !important;
         }
         
         /* Reset de Fundo para Todos os Componentes */
@@ -128,18 +136,33 @@ st.markdown(
             justify-content: center !important;
             text-align: center !important;
             border-bottom: 2px solid #000000 !important;
-            margin-bottom: 15px !important;
-            padding-bottom: 8px !important;
+            margin-bottom: 20px !important;
+            padding-bottom: 10px !important;
             background: #FFFFFF !important;
             width: 100% !important;
         }
         .print-header-text {
             text-align: center !important;
+            width: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+        }
+        .print-header-text h1 {
+            font-size: 28pt !important; /* LETRA MAIOR E COM MAIS DESTAQUE */
+            margin: 0 !important;
+            padding: 0 !important;
+            color: #D32F2F !important;
+        }
+        .print-header-text h3 {
+            font-size: 14pt !important;
+            margin: 5px 0 0 0 !important;
+            color: #666666 !important;
         }
         .print-logo-img {
-            height: 45px !important;
-            margin-right: 0px !important;
-            margin-bottom: 8px !important;
+            height: 65px !important;
+            margin: 0 auto 12px auto !important;
+            display: block !important;
         }
         
         /* Compactação Geral de Fontes para Forçar Página Única */
@@ -148,7 +171,6 @@ st.markdown(
             line-height: 1.1 !important;
             margin-bottom: 0px !important;
         }
-        h1 { font-size: 15pt !important; }
         h2 { font-size: 11pt !important; }
         h3 { font-size: 10.5pt !important; }
         
@@ -169,7 +191,7 @@ st.markdown(
            ========================================== */
         div[data-testid="stMetric"] {
             border: 2px solid #000000 !important;
-            background-color: #F5F5F5 !important; /* Fundo cinza claro para destaque total */
+            background-color: #F5F5F5 !important;
             padding: 12px !important;
             border-radius: 6px !important;
             text-align: center !important;
@@ -179,9 +201,9 @@ st.markdown(
             background-color: transparent !important;
         }
         div[data-testid="stMetricValue"] div {
-            font-size: 22pt !important; /* Tamanho massivo para o dado mais importante */
+            font-size: 22pt !important; 
             font-weight: 800 !important;
-            color: #D32F2F !important; /* Mantém o vermelho AKOFS em destaque */
+            color: #D32F2F !important; 
         }
         div[data-testid="stMetricLabel"] div {
             font-size: 11pt !important;
@@ -242,21 +264,20 @@ def parse_tempo(tempo_str):
 # ==========================================
 # 1. PARÂMETROS INICIAIS (DATA E HORA)
 # ==========================================
-st.subheader("⏱️ Início da Operação")
+st.markdown('<h3 class="no-print">⏱️ Início da Operação</h3>', unsafe_allow_html=True)
 col_d1, col_d2, col_d3 = st.columns([1, 1, 2])
 with col_d1:
     data_inicio = st.date_input("Data de Início", datetime.date.today())
 with col_d2:
     hora_inicio = st.time_input("Hora de Início", datetime.time(6, 0))
     
-st.divider()
+st.markdown('<hr class="no-print">', unsafe_allow_html=True)
 
 # ==========================================
 # 2. ÁREA DE INSERÇÃO DE ETAPAS (OCULTADA NA IMPRESSÃO)
 # ==========================================
-st.markdown('<div class="no-print">', unsafe_allow_html=True)
 with st.container():
-    st.subheader("Adicionar Nova Etapa")
+    st.markdown('<h3 class="no-print">Adicionar Nova Etapa</h3>', unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns([2, 2, 2, 1.5])
 
     with col1:
@@ -300,7 +321,8 @@ with st.container():
             salvar_dados(st.session_state.db)
             st.success("Etapa adicionada com sucesso!")
             st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
+
+st.markdown('<hr class="no-print">', unsafe_allow_html=True)
 
 # ==========================================
 # 3. LISTA DINÂMICA (EDIÇÃO E REORDENAÇÃO)
@@ -384,7 +406,7 @@ if st.session_state.db["programacao"]:
     with colB:
         st.metric(label="Previsão de Prontidão", value=termino_datetime.strftime("%d/%m/%Y às %H:%M"))
 
-    st.divider()
+    st.markdown('<hr class="no-print">', unsafe_allow_html=True)
     
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
     
