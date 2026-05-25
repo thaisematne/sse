@@ -39,88 +39,129 @@ def get_base64(path):
 logo_b64 = get_base64(LOGO_PATH)
 
 # ==========================================
-# 2. MOTOR DE IMPRESSÃO (CSS RADICAL)
+# 2. MOTOR DE IMPRESSÃO BLINDADO (CSS)
 # ==========================================
-st.markdown(f"""
+css_style = """
 <style>
 /* Estilos para a Tela */
-.print-only {{ display: none; }}
+.print-only { display: none; }
 
-@media print {{
-    /* 1. RESET TOTAL DE CORES */
-    * {{
+@media print {
+    /* 1. BLINDAGEM TOTAL DE CORES (Resolve a fonte branca) */
+    * {
         -webkit-print-color-adjust: exact !important;
         print-color-adjust: exact !important;
-        background-color: transparent !important;
-        color: black !important;
-    }}
+        color: #000000 !important;
+        -webkit-text-fill-color: #000000 !important; /* Força os inputs a ficarem pretos */
+        text-shadow: none !important;
+    }
     
-    html, body, .stApp, [data-testid="stAppViewContainer"], .main, .block-container {{
-        background-color: white !important;
-    }}
+    html, body, .stApp, [data-testid="stAppViewContainer"], .main, .block-container {
+        background-color: #FFFFFF !important;
+        background: #FFFFFF !important;
+    }
 
-    /* 2. ELIMINAÇÃO DE FUNDOS ESCUROS (INPUTS E MÉTRICAS) */
-    div[data-baseweb], div[data-baseweb] *, [data-testid="stMetric"], [data-testid="stMetricValue"] * {{
-        background-color: white !important;
-        background: white !important;
-        border-color: #eee !important;
-    }}
+    /* Remove fundos dos inputs do Streamlit */
+    div[data-baseweb], div[data-baseweb] * {
+        background-color: transparent !important;
+        background: none !important;
+        border-color: #000000 !important;
+    }
 
-    /* 3. SUPRESSÃO DE CONTEÚDO (CONFORME SOLICITADO) */
+    /* 2. SUPRESSÃO DE ELEMENTOS DE TELA E MENU */
     header, section[data-testid="stSidebar"], footer, .stButton, iframe, 
-    div[data-testid="stNotification"], .no-print, hr {{
+    div[data-testid="stNotification"], .no-print, hr {
         display: none !important;
-    }}
+    }
 
-    /* Oculta colunas de ações na tabela (6, 7 e 8) */
-    div[data-testid="column"]:nth-child(6),
-    div[data-testid="column"]:nth-child(7),
-    div[data-testid="column"]:nth-child(8) {{
+    /* Oculta os formulários (Data/Hora e Cadastro de Etapa) */
+    div.element-container:has(input), div.element-container:has(select) {
         display: none !important;
-    }}
+    }
 
-    /* Oculta as linhas de input (Data/Hora e Cadastro) */
-    div.element-container:has(input), div.element-container:has(select) {{
+    /* 3. ELIMINAÇÃO DAS COLUNAS DE AÇÕES (Cabeçalho e Botões) */
+    [data-testid="stHorizontalBlock"] {
+        flex-wrap: nowrap !important;
+        page-break-inside: avoid !important; /* Evita que a linha corte na mudança de página */
+        break-inside: avoid !important;
+        border-bottom: 1px solid #EEEEEE !important;
+        padding-bottom: 2px !important;
+    }
+    
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(n+6) {
         display: none !important;
-    }}
+        width: 0 !important;
+        flex: 0 0 0 !important;
+        overflow: hidden !important;
+    }
 
-    /* 4. REDISTRIBUIÇÃO DO LAYOUT */
-    div[data-testid="column"]:nth-child(1) {{ width: 5% !important; flex: none !important; }}
-    div[data-testid="column"]:nth-child(2) {{ width: 25% !important; flex: none !important; }}
-    div[data-testid="column"]:nth-child(3) {{ width: 45% !important; flex: none !important; }}
-    div[data-testid="column"]:nth-child(4) {{ width: 15% !important; flex: none !important; }}
-    div[data-testid="column"]:nth-child(5) {{ width: 10% !important; flex: none !important; }}
+    /* 4. REDISTRIBUIÇÃO DO LAYOUT PARA 100% DA LARGURA */
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(1) { width: 5% !important; flex: 0 0 5% !important; display: block !important; }
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(2) { width: 25% !important; flex: 0 0 25% !important; display: block !important; }
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(3) { width: 45% !important; flex: 0 0 45% !important; display: block !important; }
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(4) { width: 15% !important; flex: 0 0 15% !important; display: block !important; }
+    [data-testid="stHorizontalBlock"] > [data-testid="column"]:nth-child(5) { width: 10% !important; flex: 0 0 10% !important; display: block !important; }
 
-    /* 5. CABEÇALHO IMPOSTO E CENTRALIZADO */
-    .print-header {{
+    /* Formatação limpa dos Inputs de texto */
+    input[type="text"] {
+        border: none !important;
+        border-bottom: 1px dashed #BBBBBB !important;
+        padding: 0px !important;
+        opacity: 1 !important;
+        visibility: visible !important;
+    }
+
+    /* 5. CABEÇALHO IMPOSTO COM LETRAS MAIORES */
+    .print-header {
         display: flex !important;
         flex-direction: column !important;
         align-items: center !important;
         text-align: center !important;
-        border-bottom: 3px solid black !important;
+        border-bottom: 3px solid #000000 !important;
         margin-bottom: 25px !important;
         padding-bottom: 15px !important;
         width: 100% !important;
-    }}
-    .print-logo {{ height: 80px !important; margin-bottom: 15px !important; }}
-    .print-title {{ font-size: 38pt !important; font-weight: 900 !important; margin: 0 !important; color: {AKOFS_RED} !important; }}
-    .print-subtitle {{ font-size: 18pt !important; margin-top: 5px !important; color: #555 !important; }}
+    }
+    .print-logo { height: 80px !important; margin-bottom: 15px !important; }
+    .print-title { 
+        font-size: 42pt !important; /* LETRA MASSIVA E DESTACADA */
+        font-weight: 900 !important; 
+        margin: 0 !important; 
+        color: COLOR_AKOFS !important; 
+        -webkit-text-fill-color: COLOR_AKOFS !important;
+    }
+    .print-subtitle { font-size: 18pt !important; margin-top: 5px !important; color: #555555 !important; font-weight: bold !important;}
 
-    /* 6. COMPACTAÇÃO PARA PÁGINA ÚNICA */
-    @page {{ size: A4 portrait; margin: 12mm 15mm; }}
-    p, div, span, label, input {{ font-size: 10pt !important; line-height: 1.1 !important; }}
-    .stMetricValue div {{ font-size: 24pt !important; font-weight: bold !important; color: {AKOFS_RED} !important; }}
+    /* 6. CONFIGURAÇÃO DA FOLHA A4 */
+    @page { size: A4 portrait; margin: 12mm 15mm; }
+    p, div, span, label, input { font-size: 10.5pt !important; line-height: 1.1 !important; }
     
-    .print-only {{ display: block !important; margin-bottom: 15px !important; font-weight: bold; text-align: center; }}
-}}
+    /* 7. DESTAQUE DO RESUMO OPERACIONAL */
+    div[data-testid="stMetric"] {
+        border: 2px solid #000000 !important;
+        background-color: #F8F8F8 !important;
+        padding: 10px !important;
+        border-radius: 6px !important;
+        text-align: center !important;
+    }
+    .stMetricValue div { 
+        font-size: 26pt !important; 
+        font-weight: 900 !important; 
+        color: COLOR_AKOFS !important; 
+        -webkit-text-fill-color: COLOR_AKOFS !important;
+    }
+    
+    .print-only { display: block !important; margin-bottom: 15px !important; font-weight: bold; text-align: center; }
+}
 </style>
-""", unsafe_allow_html=True)
+"""
+st.markdown(css_style.replace("COLOR_AKOFS", AKOFS_RED), unsafe_allow_html=True)
 
 # ==========================================
-# 3. CONTEÚDO (ORDEM LÓGICA)
+# 3. CONTEÚDO DA TELA E RELATÓRIO
 # ==========================================
 
-# Cabeçalho de Impressão (Centralizado)
+# Cabeçalho de Impressão
 st.markdown(f"""
 <div class="print-header">
     {f'<img src="data:image/png;base64,{logo_b64}" class="print-logo">' if logo_b64 else ''}
@@ -129,17 +170,17 @@ st.markdown(f"""
 </div>
 """, unsafe_allow_html=True)
 
-# PARTE 1: INÍCIO DA OPERAÇÃO (Visível apenas na tela)
+# INÍCIO DA OPERAÇÃO (Visível apenas na tela)
 st.markdown('<div class="no-print"><h3>⏱️ Início da Operação</h3>', unsafe_allow_html=True)
 c_h1, c_h2, _ = st.columns([1, 1, 2])
 with c_h1: data_op = st.date_input("Data", datetime.date.today())
 with c_h2: hora_op = st.time_input("Hora", datetime.time(6, 0))
 st.markdown('</div>', unsafe_allow_html=True)
 
-# Data da Operação para o PDF
+# Data da Operação formatada para o PDF
 st.markdown(f'<div class="print-only">INÍCIO DA OPERAÇÃO: {data_op.strftime("%d/%m/%Y")} às {hora_op.strftime("%H:%M")}</div>', unsafe_allow_html=True)
 
-# PARTE 2: ADICIONAR ETAPA (Oculto na Impressão)
+# ADICIONAR ETAPA (Oculto na Impressão)
 st.markdown('<div class="no-print"><hr><h3>➕ Adicionar Etapa</h3>', unsafe_allow_html=True)
 c_a1, c_h2, c_h3, c_h4 = st.columns([2, 3, 1.5, 1])
 with c_a1: loc_in = st.text_input("Locação", placeholder="Ex: 9-BUZ-39", key="ni_loc")
@@ -158,9 +199,10 @@ if st.button("Adicionar à Lista", type="primary"):
         except: st.error("Use HH:MM")
 st.markdown('</div><hr>', unsafe_allow_html=True)
 
-# PARTE 3: PROGRAMAÇÃO ATUAL
+# PROGRAMAÇÃO ATUAL
 st.subheader("📋 Programação Atual")
 if st.session_state.db["programacao"]:
+    
     # Headers
     hc = st.columns([0.4, 2, 3, 1.5, 1.2, 1.5])
     labels = ["#", "Locação", "Etapa", "Responsável", "Tempo", "Ações"]
@@ -174,7 +216,7 @@ if st.session_state.db["programacao"]:
         uid = item.get("id", str(uuid.uuid4()))
         c = st.columns([0.4, 2, 3, 1.5, 1.2, 0.5, 0.5, 0.5])
         
-        c[0].markdown(f"<div style='margin-top:8px;'>{idx+1}</div>", unsafe_allow_html=True)
+        c[0].markdown(f"<div style='margin-top:8px; font-weight:bold;'>{idx+1}</div>", unsafe_allow_html=True)
         c[1].text_input("L", value=item["Locação"], key=f"l_{uid}", label_visibility="collapsed", on_change=update_db, args=(idx, "Locação", f"l_{uid}"))
         c[2].text_input("E", value=item["Etapa"], key=f"e_{uid}", label_visibility="collapsed", on_change=update_db, args=(idx, "Etapa", f"e_{uid}"))
         c[3].text_input("R", value=item["Responsável"], key=f"r_{uid}", label_visibility="collapsed", on_change=update_db, args=(idx, "Responsável", f"r_{uid}"))
@@ -194,22 +236,22 @@ if st.session_state.db["programacao"]:
                 st.session_state.db["programacao"].pop(idx)
                 salvar_dados(st.session_state.db); st.rerun()
 
-# PARTE 4: RESUMO OPERACIONAL
+# RESUMO OPERACIONAL
 st.divider()
 st.subheader("🎯 Resumo Operacional")
 tot_m = sum(int(i.get("Horas", 0))*60 + int(i.get("Minutos", 0)) for i in st.session_state.db["programacao"])
 fim_dt = datetime.datetime.combine(data_op, hora_op) + datetime.timedelta(minutes=tot_m)
 
 colA, colB = st.columns(2)
-colA.metric("Duração Total", f"{tot_m//60:02d}h {tot_m%60:02d}m")
+colA.metric("Duração Total Estimada", f"{tot_m//60:02d}h {tot_m%60:02d}m")
 colB.metric("Previsão de Prontidão", fim_dt.strftime("%d/%m/%Y às %H:%M"))
 
-# Botões Finais (Apenas Tela)
+# BOTÕES DE AÇÃO DA TELA (Ocultos no PDF)
 st.markdown('<div class="no-print"><hr>', unsafe_allow_html=True)
 cb1, cb2, _ = st.columns([1.2, 1, 2])
 with cb1:
     components.html(f"""
-        <button onclick="window.parent.print()" style="background:{AKOFS_RED};color:white;border:none;padding:12px;border-radius:5px;width:100%;font-weight:bold;cursor:pointer;font-family:sans-serif;">
+        <button onclick="window.parent.print()" style="background:{AKOFS_RED};color:white;border:none;padding:12px;border-radius:5px;width:100%;font-weight:bold;cursor:pointer;font-family:sans-serif;font-size:1rem;">
         🖨️ Imprimir Relatório PDF
         </button>""", height=60)
 with cb2:
