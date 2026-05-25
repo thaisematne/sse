@@ -1,8 +1,15 @@
+Python
 import streamlit as st
 import datetime
 import json
 import os
 import uuid
+from PIL import Image
+
+# Força o sistema a buscar a logo na pasta anterior (raiz)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+logo_path = os.path.join(root_dir, "image_c889bf.png")
 
 st.set_page_config(
     page_title="Cronograma de Prontidão | Subsea Planner Pro", 
@@ -11,12 +18,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inserção da Logo na Sidebar (Menu Lateral)
-st.sidebar.markdown("## 🔴 AKOFS Offshore")
+# Sidebar com Logo
+if os.path.exists(logo_path):
+    logo = Image.open(logo_path)
+    st.sidebar.image(logo, use_container_width=True)
+else:
+    st.sidebar.markdown("## 🔴 AKOFS Offshore")
 st.sidebar.markdown("---")
 
-st.title("Subsea Planner Pro")
-st.markdown("### Módulo 1: Cronograma de Prontidão")
+# Título Principal (Sem a palavra "Módulo")
+AKOFS_RED = "#D32F2F"
+st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
+st.markdown("### Cronograma de Prontidão")
 st.divider()
 
 ARQUIVO_DADOS = "dados_prontidao.json"
