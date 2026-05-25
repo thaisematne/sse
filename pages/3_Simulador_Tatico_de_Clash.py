@@ -2,8 +2,20 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 
-st.set_page_config(page_title="Plano de Clash 2D & Docagem", layout="wide")
-st.title("Módulo 3: Plano Tático de Segurança e Manobra")
+st.set_page_config(
+    page_title="Simulador Tático de Clash | Subsea Planner Pro", 
+    page_icon="⚓", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Inserção da Logo na Sidebar (Menu Lateral)
+st.sidebar.markdown("## 🔴 AKOFS Offshore")
+st.sidebar.markdown("---")
+
+st.title("Subsea Planner Pro")
+st.markdown("### Módulo 3: Simulador Tático de Clash")
+st.divider()
 
 # --- 1. Configurações de Offset ---
 with st.expander("⚙️ Controle Dimensional - Posições no Convés (As-Built)"):
