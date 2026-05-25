@@ -1,8 +1,20 @@
 import streamlit as st
 import pandas as pd
 
-st.set_page_config(page_title="Análise de Pressões", layout="wide")
-st.title("Módulo 2: Análise de Pressões (PE-2SUB-00406)")
+st.set_page_config(
+    page_title="Validação de Seal Test | Subsea Planner Pro", 
+    page_icon="⚓", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Inserção da Logo na Sidebar (Menu Lateral)
+st.sidebar.markdown("## 🔴 AKOFS Offshore")
+st.sidebar.markdown("---")
+
+st.title("Subsea Planner Pro")
+st.markdown("### Módulo 2: Validação de Seal Test")
+st.divider()
 
 tab1, tab2, tab3 = st.tabs(["Pressão Hidrostática", "Pressão Máxima de Teste", "Teste de Estanqueidade"])
 
