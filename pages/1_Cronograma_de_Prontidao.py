@@ -34,7 +34,7 @@ else:
     st.sidebar.markdown("## 🔴 AKOFS Offshore")
 st.sidebar.markdown("---")
 
-# --- CABEÇALHO UNIFICADO (TELA E IMPRESSÃO) ---
+# --- CABEÇALHO UNIFICADO COM CENTRALIZAÇÃO ---
 if os.path.exists(logo_path):
     logo_base64 = obter_base64_imagem(logo_path)
     header_html = f"""
@@ -42,7 +42,7 @@ if os.path.exists(logo_path):
         <img src="data:image/png;base64,{logo_base64}" class="print-logo-img">
         <div class="print-header-text">
             <h1 style="color: {AKOFS_RED}; margin: 0; font-size: 2.2em;">Subsea Planner Pro</h1>
-            <h3 style="margin: 5px 0 0 0; font-weight: normal;">Cronograma de Prontidão</h3>
+            <h3 style="margin: 5px 0 0 0; font-weight: normal; color: #aaa;">Cronograma de Prontidão</h3>
         </div>
     </div>
     """
@@ -51,11 +51,11 @@ else:
     st.markdown(f"<h1 style='color: {AKOFS_RED}; text-align: center;'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
     st.markdown("<h3 style='text-align: center;'>Cronograma de Prontidão</h3>", unsafe_allow_html=True)
 
-# --- REGRAS DE ESTILO CSS AVANÇADAS (COMPACTAÇÃO A4 E FUNDO BRANCO) ---
+# --- REGRAS DE ESTILO CSS PARA IMPRESSÃO EM 1 PÁGINA VERTICAL ---
 st.markdown(
     """
     <style>
-    /* Estilização do cabeçalho na tela (Padrão) */
+    /* Estilização do cabeçalho na tela */
     .print-header {
         display: flex;
         align-items: center;
@@ -69,32 +69,32 @@ st.markdown(
     }
     
     /* ==========================================
-       REGRA DE OURO: ESTILOS EXCLUSIVOS DE IMPRESSÃO
+       ESTILOS EXCLUSIVOS DE IMPRESSÃO (A4 VERTICAL)
        ========================================== */
     @media print {
-        /* Força Cores Exatas e Textos Pretos */
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
             color: #000000 !important;
         }
         
-        /* Configuração de Folha Paisagem com Margens Mínimas */
+        /* Configuração Estrita de Folha Vertical (Portrait) */
         @page {
-            size: A4 landscape;
-            margin: 5mm 10mm;
+            size: A4 portrait;
+            margin: 8mm 12mm 8mm 12mm;
         }
         
-        /* Ocultar Interface do Streamlit */
+        /* Ocultar Interface e o Formulário de Cadastro de Etapas */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         .stButton, 
         iframe,
-        div[data-testid="stNotification"] { 
+        div[data-testid="stNotification"],
+        .no-print { 
             display: none !important; 
         }
         
-        /* ATAQUE DIRETO AOS FUNDOS ESCUROS (Select e Time Input) */
+        /* Reset de Fundo para Todos os Componentes */
         html, body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"],
         div[data-baseweb="input"], div[data-baseweb="base-input"], 
         div[data-baseweb="select"], div[data-testid="stTimeInput"],
@@ -103,7 +103,7 @@ st.markdown(
             background: #FFFFFF !important;
         }
         
-        /* Limpeza nas sub-divs dos componentes de input */
+        /* Formatação Limpa dos Inputs da Tabela */
         div[data-baseweb="select"] > div, 
         div[data-baseweb="base-input"] > input,
         div[class*="stSelectbox"] > div,
@@ -117,39 +117,44 @@ st.markdown(
             color: #000000 !important;
         }
         
-        /* Centralização do Cabeçalho na Folha A4 */
+        /* Centralização Absoluta do Cabeçalho no Relatório */
         .print-header {
             display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
             justify-content: center !important;
+            text-align: center !important;
             border-bottom: 2px solid #000000 !important;
-            margin-bottom: 10px !important;
-            padding-bottom: 5px !important;
+            margin-bottom: 15px !important;
+            padding-bottom: 8px !important;
             background: #FFFFFF !important;
+            width: 100% !important;
         }
         .print-header-text {
             text-align: center !important;
         }
         .print-logo-img {
             height: 45px !important;
+            margin-right: 0px !important;
+            margin-bottom: 8px !important;
         }
         
-        /* COMPACTAÇÃO DE FONTES E ESPAÇOS (Caber em 1 Página) */
+        /* Compactação Geral de Fontes para Forçar Página Única */
         p, div, span, label, input, .stMarkdown {
-            font-size: 10pt !important;
+            font-size: 9.5pt !important;
             line-height: 1.1 !important;
             margin-bottom: 0px !important;
         }
-        h1 { font-size: 16pt !important; }
-        h3 { font-size: 12pt !important; }
+        h1 { font-size: 15pt !important; }
+        h2 { font-size: 11pt !important; }
+        h3 { font-size: 10.5pt !important; }
         
         .block-container {
             padding-top: 0rem !important;
             padding-bottom: 0rem !important;
         }
         div[data-testid="stHorizontalBlock"] {
-            gap: 5px !important;
-            margin-bottom: 0px !important;
-            padding-bottom: 0px !important;
+            gap: 8px !important;
         }
         hr {
             margin: 5px 0 !important;
@@ -218,8 +223,9 @@ with col_d2:
 st.divider()
 
 # ==========================================
-# 2. ÁREA DE INSERÇÃO DE ETAPAS 
+# 2. ÁREA DE INSERÇÃO DE ETAPAS (OCULTADA NA IMPRESSÃO)
 # ==========================================
+st.markdown('<div class="no-print">', unsafe_allow_html=True)
 with st.container():
     st.subheader("Adicionar Nova Etapa")
     col1, col2, col3, col4 = st.columns([2, 2, 2, 1.5])
@@ -265,8 +271,7 @@ with st.container():
             salvar_dados(st.session_state.db)
             st.success("Etapa adicionada com sucesso!")
             st.rerun()
-
-st.divider()
+st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
 # 3. LISTA DINÂMICA (EDIÇÃO E REORDENAÇÃO)
