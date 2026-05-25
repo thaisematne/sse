@@ -7,136 +7,203 @@ import uuid
 import base64
 from PIL import Image
 
-# ==========================================
-# 1. CONFIGURAÇÃO INICIAL E IDENTIDADE
-# ==========================================
+# 1. CONFIGURAÇÃO DE DIRETÓRIOS E LOGO
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
-LOGO_PATH = os.path.join(root_dir, "image_c889bf.png")
-ARQUIVO_DADOS = "dados_prontidao.json"
-AKOFS_RED = "#D32F2F"
+logo_path = os.path.join(root_dir, "image_c889bf.png")
 
-st.set_page_config(page_title="Cronograma | Subsea Planner Pro", page_icon="⚓", layout="wide")
+st.set_page_config(
+    page_title="Cronograma de Prontidão | Subsea Planner Pro", 
+    page_icon="⚓", 
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 def obter_base64_imagem(caminho_img):
-    if os.path.exists(caminho_img):
-        with open(caminho_img, "rb") as img_file:
-            return base64.b64encode(img_file.read()).decode()
-    return ""
+    with open(caminho_img, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
 
-logo_base64 = obter_base64_imagem(LOGO_PATH)
+# Cores Corporativas
+AKOFS_RED = "#D32F2F"
 
-# ==========================================
-# 2. MOTOR CSS (TELA vs. IMPRESSÃO A4)
-# Código blindado contra SyntaxError (sem f-strings no CSS)
-# ==========================================
-css_style = """
-<style>
-/* ==========================================
-   REGRAS EXCLUSIVAS DE IMPRESSÃO (A4 VERTICAL)
-   ========================================== */
-@media print {
-    /* Força a fidelidade de cores e texto preto */
-    * {
-        -webkit-print-color-adjust: exact !important;
-        print-color-adjust: exact !important;
-        color: #000000 !important;
-    }
-    
-    @page {
-        size: A4 portrait;
-        margin: 15mm;
-    }
-    
-    /* OCULTA TUDO O QUE NÃO FOR O RELATÓRIO (Sidebar, Formulários, Botões) */
-    section[data-testid="stSidebar"], 
-    header[data-testid="stHeader"], 
-    .stButton, iframe, div[data-testid="stNotification"], 
-    .no-print { 
-        display: none !important; 
-    }
-    
-    html, body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"] {
-        background-color: #FFFFFF !important;
-    }
-    
-    /* OCULTA A COLUNA DE AÇÕES NA TABELA (Colunas 6, 7 e 8) */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(6),
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(7),
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(8) { 
-        display: none !important; 
-    }
-
-    /* REDISTRIBUI AS COLUNAS PARA OCUPAR 100% DA FOLHA A4 */
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(1) { width: 5% !important; flex: none !important; }
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(2) { width: 25% !important; flex: none !important; }
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(3) { width: 45% !important; flex: none !important; }
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(4) { width: 15% !important; flex: none !important; }
-    div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(5) { width: 10% !important; flex: none !important; }
-    
-    /* Transforma as caixas de input da tela em texto limpo no papel */
-    input, select, textarea, div[data-baseweb="base-input"] > input {
-        background-color: transparent !important;
-        border: none !important;
-        border-bottom: 1px dashed #ccc !important;
-        box-shadow: none !important;
-        color: #000000 !important;
-        padding: 0px !important;
-        font-size: 10pt !important;
-    }
-    
-    /* CABEÇALHO CENTRALIZADO DE RELATÓRIO */
-    .print-header {
-        display: flex !important;
-        flex-direction: column !important;
-        align-items: center !important;
-        text-align: center !important;
-        border-bottom: 2px solid #000000 !important;
-        margin-bottom: 20px !important;
-        padding-bottom: 10px !important;
-    }
-    .print-logo-img { height: 45px !important; margin-bottom: 10px !important; }
-    
-    /* COMPACTAÇÃO DE FONTES PARA GARANTIR PÁGINA ÚNICA */
-    p, div, span, label, .stMarkdown { font-size: 10pt !important; }
-    h1 { font-size: 16pt !important; margin: 0 !important; }
-    h3 { font-size: 12pt !important; margin: 5px 0 !important; }
-    
-    /* DESTAQUE DE MOLDURA PARA O RESUMO OPERACIONAL */
-    div[data-testid="stMetric"] {
-        border: 2px solid #000000 !important;
-        background-color: #F5F5F5 !important;
-        padding: 10px !important;
-        border-radius: 5px !important;
-        text-align: center !important;
-    }
-    div[data-testid="stMetricValue"] div { 
-        font-size: 20pt !important; 
-        font-weight: bold !important; 
-        color: COLOR_AKOFS !important; 
-    }
-}
-</style>
-"""
-# Troca a cor via replace para evitar conflito de chaves no Python
-st.markdown(css_style.replace("COLOR_AKOFS", AKOFS_RED), unsafe_allow_html=True)
-
-# --- SIDEBAR (VISÍVEL APENAS NA TELA) ---
-if os.path.exists(LOGO_PATH):
-    st.sidebar.image(Image.open(LOGO_PATH), use_container_width=True)
+# --- SIDEBAR PADRÃO DE NAVEGAÇÃO ---
+if os.path.exists(logo_path):
+    logo_lateral = Image.open(logo_path)
+    st.sidebar.image(logo_lateral, use_container_width=True)
 else:
     st.sidebar.markdown("## 🔴 AKOFS Offshore")
 st.sidebar.markdown("---")
 
-# ==========================================
-# 3. LÓGICA DE DADOS (COM PROTEÇÃO ANTI-ERRO)
-# ==========================================
+# --- CABEÇALHO UNIFICADO COM CENTRALIZAÇÃO ---
+if os.path.exists(logo_path):
+    logo_base64 = obter_base64_imagem(logo_path)
+    header_html = f"""
+    <div class="print-header">
+        <img src="data:image/png;base64,{logo_base64}" class="print-logo-img">
+        <div class="print-header-text">
+            <h1 style="color: {AKOFS_RED}; margin: 0; font-size: 2.2em;">Subsea Planner Pro</h1>
+            <h3 style="margin: 5px 0 0 0; font-weight: normal; color: #aaa;">Cronograma de Prontidão</h3>
+        </div>
+    </div>
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
+else:
+    st.markdown(f"<h1 style='color: {AKOFS_RED}; text-align: center;'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>Cronograma de Prontidão</h3>", unsafe_allow_html=True)
+
+# --- REGRAS DE ESTILO CSS PARA IMPRESSÃO EM 1 PÁGINA VERTICAL ---
+st.markdown(
+    """
+    <style>
+    /* Estilização do cabeçalho na tela */
+    .print-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #333;
+    }
+    .print-logo-img {
+        height: 55px;
+        margin-right: 20px;
+    }
+    
+    /* ==========================================
+       ESTILOS EXCLUSIVOS DE IMPRESSÃO (A4 VERTICAL)
+       ========================================== */
+    @media print {
+        * {
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+            color: #000000 !important;
+        }
+        
+        /* Configuração Estrita de Folha Vertical (Portrait) */
+        @page {
+            size: A4 portrait;
+            margin: 8mm 12mm 8mm 12mm;
+        }
+        
+        /* Ocultar Interface, Formulário de Cadastro e a COLUNA DE AÇÕES */
+        section[data-testid="stSidebar"], 
+        header[data-testid="stHeader"], 
+        .stButton, 
+        iframe,
+        div[data-testid="stNotification"],
+        .no-print,
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(6),
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(7),
+        div[data-testid="stHorizontalBlock"] > div[data-testid="column"]:nth-child(8) { 
+            display: none !important; 
+        }
+        
+        /* Reset de Fundo para Todos os Componentes */
+        html, body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"],
+        div[data-baseweb="input"], div[data-baseweb="base-input"], 
+        div[data-baseweb="select"], div[data-testid="stTimeInput"],
+        div[data-testid="stSelectbox"], div[data-testid="stDateInput"] {
+            background-color: #FFFFFF !important;
+            background: #FFFFFF !important;
+        }
+        
+        /* Formatação Limpa dos Inputs da Tabela */
+        div[data-baseweb="select"] > div, 
+        div[data-baseweb="base-input"] > input,
+        div[class*="stSelectbox"] > div,
+        div[class*="stTimeInput"] > div,
+        input, select, textarea {
+            background-color: transparent !important;
+            background: transparent !important;
+            border: none !important;
+            border-bottom: 1px dashed #999 !important;
+            box-shadow: none !important;
+            color: #000000 !important;
+        }
+        
+        /* Centralização Absoluta do Cabeçalho no Relatório */
+        .print-header {
+            display: flex !important;
+            flex-direction: column !important;
+            align-items: center !important;
+            justify-content: center !important;
+            text-align: center !important;
+            border-bottom: 2px solid #000000 !important;
+            margin-bottom: 15px !important;
+            padding-bottom: 8px !important;
+            background: #FFFFFF !important;
+            width: 100% !important;
+        }
+        .print-header-text {
+            text-align: center !important;
+        }
+        .print-logo-img {
+            height: 45px !important;
+            margin-right: 0px !important;
+            margin-bottom: 8px !important;
+        }
+        
+        /* Compactação Geral de Fontes para Forçar Página Única */
+        p, div, span, label, input, .stMarkdown {
+            font-size: 9.5pt !important;
+            line-height: 1.1 !important;
+            margin-bottom: 0px !important;
+        }
+        h1 { font-size: 15pt !important; }
+        h2 { font-size: 11pt !important; }
+        h3 { font-size: 10.5pt !important; }
+        
+        .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            gap: 8px !important;
+        }
+        hr {
+            margin: 5px 0 !important;
+            border-color: #000000 !important;
+        }
+
+        /* ==========================================
+           DESTAQUE MÁXIMO DO RESUMO OPERACIONAL NA IMPRESSÃO
+           ========================================== */
+        div[data-testid="stMetric"] {
+            border: 2px solid #000000 !important;
+            background-color: #F5F5F5 !important; /* Fundo cinza claro para destaque total */
+            padding: 12px !important;
+            border-radius: 6px !important;
+            text-align: center !important;
+            box-shadow: none !important;
+        }
+        div[data-testid="stMetric"] * {
+            background-color: transparent !important;
+        }
+        div[data-testid="stMetricValue"] div {
+            font-size: 22pt !important; /* Tamanho massivo para o dado mais importante */
+            font-weight: 800 !important;
+            color: #D32F2F !important; /* Mantém o vermelho AKOFS em destaque */
+        }
+        div[data-testid="stMetricLabel"] div {
+            font-size: 11pt !important;
+            font-weight: bold !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
+
+ARQUIVO_DADOS = "dados_prontidao.json"
+
 ETAPAS_DEFAULT = [
-    "Navegar para a locação", "Check list de DP", "Descer ROV", "Inspeção inicial", 
-    "Descer equipamento", "Instalar equipamento", "Manuseio de EFL", "Manuseio de HFL", 
-    "Manuseio de válvula", "Etapas da UEP", "Realizar testes / intervenção", "Limpeza", 
-    "Desmobilizar equipamento", "Recolher equipamento", "Inspeção final", "Subir ROV", 
-    "Aguardar prontidão", "Outros"
+    "Navegar para a locação", "Check list de DP", "Descer ROV",
+    "Inspeção inicial", "Descer equipamento", "Instalar equipamento",
+    "Manuseio de EFL", "Manuseio de HFL", "Manuseio de válvula",
+    "Etapas da UEP", "Realizar testes / intervenção",
+    "Limpeza", "Desmobilizar equipamento", "Recolher equipamento",
+    "Inspeção final", "Subir ROV", "Aguardar prontidão", "Outros"
 ]
 
 def carregar_dados():
@@ -144,7 +211,7 @@ def carregar_dados():
         try:
             with open(ARQUIVO_DADOS, "r", encoding="utf-8") as f:
                 return json.load(f)
-        except Exception: 
+        except:
             pass
     return {"base_etapas": ETAPAS_DEFAULT, "programacao": []}
 
@@ -155,186 +222,194 @@ def salvar_dados(dados):
 if 'db' not in st.session_state:
     st.session_state.db = carregar_dados()
 
-# ==========================================
-# 4. CABEÇALHO DO DOCUMENTO
-# ==========================================
-img_html = f'<img src="data:image/png;base64,{logo_base64}" class="print-logo-img">' if logo_base64 else ""
-header_html = f"""
-<div class="print-header">
-    {img_html}
-    <h1 style="color: {AKOFS_RED}; margin-bottom: 0;">Subsea Planner Pro</h1>
-    <h3 style="margin-top: 5px; color: #888;">Cronograma de Prontidão</h3>
-</div>
-"""
-st.markdown(header_html, unsafe_allow_html=True)
+if "Outros" not in st.session_state.db["base_etapas"]:
+    st.session_state.db["base_etapas"].append("Outros")
+if "Limpeza" not in st.session_state.db["base_etapas"]:
+    st.session_state.db["base_etapas"].insert(-2, "Limpeza")
+
+def parse_tempo(tempo_str):
+    try:
+        tempo_str = str(tempo_str).strip()
+        if ":" in tempo_str:
+            partes = tempo_str.split(":")
+            return int(partes[0]), int(partes[1])
+        elif tempo_str.isdigit():
+            return int(tempo_str), 0
+    except:
+        pass
+    return 0, 0
 
 # ==========================================
-# PASSO 1: DATA E HORA DE INÍCIO
+# 1. PARÂMETROS INICIAIS (DATA E HORA)
 # ==========================================
-st.markdown('<div class="no-print">', unsafe_allow_html=True)
 st.subheader("⏱️ Início da Operação")
 col_d1, col_d2, col_d3 = st.columns([1, 1, 2])
 with col_d1:
     data_inicio = st.date_input("Data de Início", datetime.date.today())
 with col_d2:
     hora_inicio = st.time_input("Hora de Início", datetime.time(6, 0))
+    
 st.divider()
-st.markdown('</div>', unsafe_allow_html=True)
-
-# Este bloco só aparece no papel impresso, organizando a Data/Hora como um cabeçalho técnico
-metadata_html = f"""
-<div style="display: none;" class="print-only-block">
-    <strong>INÍCIO DA OPERAÇÃO:</strong> {data_inicio.strftime('%d/%m/%Y')} às {hora_inicio.strftime('%H:%M')}
-</div>
-<style>@media print {{ .print-only-block {{ display: block !important; margin-bottom: 15px !important; text-align: center; font-size: 11pt !important; }} }}</style>
-"""
-st.markdown(metadata_html, unsafe_allow_html=True)
 
 # ==========================================
-# PASSO 2: ADICIONAR NOVA ETAPA (OCULTO NO PRINT)
+# 2. ÁREA DE INSERÇÃO DE ETAPAS (OCULTADA NA IMPRESSÃO)
 # ==========================================
 st.markdown('<div class="no-print">', unsafe_allow_html=True)
-st.subheader("➕ Adicionar Nova Etapa")
-col1, col2, col3, col4 = st.columns([2, 2, 2, 1.5])
+with st.container():
+    st.subheader("Adicionar Nova Etapa")
+    col1, col2, col3, col4 = st.columns([2, 2, 2, 1.5])
 
-with col1:
-    locacao = st.text_input("Locação", placeholder="Ex: 9-BUZ-39", key="new_loc")
-with col2:
-    etp_sel = st.selectbox("Etapa", st.session_state.db["base_etapas"], key="new_etp_sel")
-    if etp_sel == "Outros":
-        etp_final = st.text_input("Descreva a etapa:", key="new_etp_man")
-    else:
-        etp_final = etp_sel
-with col3:
-    resp = st.text_input("Responsável", value="MPSV", key="new_resp")
-with col4:
-    tempo = st.text_input("Tempo (HH:MM)", value="01:00", key="new_tempo")
-
-if st.button("Adicionar à Programação", type="primary"):
-    try:
-        h, m = 0, 0
-        if ":" in tempo:
-            partes = tempo.split(":")
-            h = int(partes[0])
-            m = int(partes[1])
-        else:
-            h = int(tempo)
+    with col1:
+        locacao = st.text_input("Locação (Ex: 9-BUZ-39DA-RJS)", key="new_locacao")
+    
+    with col2:
+        etapa_selecionada = st.selectbox("Selecione a Etapa", st.session_state.db["base_etapas"], key="new_etapa_sel")
+        etapa_final = etapa_selecionada
+        salvar_na_base = False
         
-        nova = {
-            "id": str(uuid.uuid4()),
-            "Locação": locacao,
-            "Etapa": etp_final,
-            "Responsável": resp,
-            "Horas": h,
-            "Minutos": m
-        }
-        st.session_state.db["programacao"].append(nova)
-        salvar_dados(st.session_state.db)
-        st.rerun()
-    except Exception:
-        st.error("Tempo inválido. Use HH:MM")
-st.divider()
+        if etapa_selecionada == "Outros":
+            etapa_manual = st.text_input("Descreva a nova etapa:", placeholder="Digite aqui...", key="new_etapa_manual")
+            etapa_final = etapa_manual
+            salvar_na_base = st.checkbox("💾 Salvar na lista padrão", key="new_salvar_base")
+
+    with col3:
+        responsavel = st.text_input("Responsável", value="MPSV", key="new_responsavel")
+    with col4:
+        tempo_input = st.text_input("Tempo (HH:MM)", value="01:00", help="Use o formato HH:MM (ex: 01:30)", key="new_tempo")
+
+    if st.button("➕ Adicionar à Programação", type="primary", key="btn_adicionar"):
+        h, m = parse_tempo(tempo_input)
+        
+        if not locacao:
+            st.error("Por favor, preencha a Locação.")
+        elif etapa_selecionada == "Outros" and not etapa_final.strip():
+            st.error("Por favor, descreva a etapa.")
+        else:
+            if salvar_na_base and etapa_final not in st.session_state.db["base_etapas"]:
+                st.session_state.db["base_etapas"].insert(-1, etapa_final)
+
+            nova_etapa = {
+                "id": str(uuid.uuid4()),
+                "Locação": locacao,
+                "Etapa": etapa_final,
+                "Responsável": responsavel,
+                "Horas": h,
+                "Minutos": m
+            }
+            st.session_state.db["programacao"].append(nova_etapa)
+            salvar_dados(st.session_state.db)
+            st.success("Etapa adicionada com sucesso!")
+            st.rerun()
 st.markdown('</div>', unsafe_allow_html=True)
 
 # ==========================================
-# PASSO 3: PROGRAMAÇÃO ATUAL (EDITÁVEL NA TELA / LIMPA NO PRINT)
+# 3. LISTA DINÂMICA (EDIÇÃO E REORDENAÇÃO)
 # ==========================================
-st.subheader("📋 Programação Atual")
-
 if st.session_state.db["programacao"]:
-    hc = st.columns([0.4, 2, 3, 1.5, 1, 0.4, 0.4, 0.4])
-    for i, t in enumerate(["#", "Locação", "Etapa", "Responsável", "Tempo", "Ações", "", ""]):
-        if t: hc[i].write(f"**{t}**")
+    st.subheader("📋 Programação Atual")
 
-    def update_val(idx, field, key):
-        st.session_state.db["programacao"][idx][field] = st.session_state[key]
+    hc1, hc2, hc3, hc4, hc5, hc_acoes = st.columns([0.4, 2, 3, 1.5, 1.2, 1.5])
+    hc1.write("**#**")
+    hc2.write("**Locação**")
+    hc3.write("**Etapa**")
+    hc4.write("**Responsável**")
+    hc5.write("**Tempo**")
+    hc_acoes.write("**Ações**")
+
+    def atualizar_campo(index, campo, chave_widget):
+        st.session_state.db["programacao"][index][campo] = st.session_state[chave_widget]
         salvar_dados(st.session_state.db)
 
-    def update_time(idx, key):
-        try:
-            t_str = st.session_state[key]
-            if ":" in t_str:
-                partes = t_str.split(":")
-                st.session_state.db["programacao"][idx]["Horas"] = int(partes[0])
-                st.session_state.db["programacao"][idx]["Minutos"] = int(partes[1])
-            else:
-                st.session_state.db["programacao"][idx]["Horas"] = int(t_str)
-                st.session_state.db["programacao"][idx]["Minutos"] = 0
-            salvar_dados(st.session_state.db)
-        except Exception: 
-            pass
+    def atualizar_tempo(index, chave_widget):
+        h, m = parse_tempo(st.session_state[chave_widget])
+        st.session_state.db["programacao"][index]["Horas"] = h
+        st.session_state.db["programacao"][index]["Minutos"] = m
+        salvar_dados(st.session_state.db)
 
     for idx, item in enumerate(st.session_state.db["programacao"]):
-        if "id" not in item: 
+        if "id" not in item:
             item["id"] = str(uuid.uuid4())
+            
         uid = item["id"]
-        c = st.columns([0.4, 2, 3, 1.5, 1, 0.4, 0.4, 0.4])
+
+        c1, c2, c3, c4, c5, c_up, c_down, c_del = st.columns([0.4, 2, 3, 1.5, 1.2, 0.5, 0.5, 0.5])
         
-        c[0].markdown(f"<div style='margin-top:8px;'>{idx+1}</div>", unsafe_allow_html=True)
+        c1.markdown(f"<div style='margin-top: 8px; font-weight: bold;'>{idx+1}</div>", unsafe_allow_html=True)
         
-        # Blindagem contra erros de dados antigos
-        l_val = item.get("Locação", item.get("loc", ""))
-        e_val = item.get("Etapa", item.get("etp", ""))
-        r_val = item.get("Responsável", item.get("resp", ""))
-        h_val = item.get("Horas", item.get("h", 0))
-        m_val = item.get("Minutos", item.get("m", 0))
+        c2.text_input("Locação", value=item["Locação"], key=f"loc_{uid}", label_visibility="collapsed", on_change=atualizar_campo, args=(idx, "Locação", f"loc_{uid}"))
+        c3.text_input("Etapa", value=item["Etapa"], key=f"et_{uid}", label_visibility="collapsed", on_change=atualizar_campo, args=(idx, "Etapa", f"et_{uid}"))
+        c4.text_input("Responsável", value=item["Responsável"], key=f"resp_{uid}", label_visibility="collapsed", on_change=atualizar_campo, args=(idx, "Responsável", f"resp_{uid}"))
+        
+        tempo_formatado = f"{int(item.get('Horas', 0)):02d}:{int(item.get('Minutos', 0)):02d}"
+        c5.text_input("Tempo", value=tempo_formatado, key=f"t_{uid}", label_visibility="collapsed", on_change=atualizar_tempo, args=(idx, f"t_{uid}"))
+        
+        with c_up:
+            if st.button("⬆️", key=f"up_{uid}", help="Subir"):
+                if idx > 0:
+                    prog = st.session_state.db["programacao"]
+                    prog[idx], prog[idx-1] = prog[idx-1], prog[idx]
+                    salvar_dados(st.session_state.db)
+                    st.rerun()
+        with c_down:
+            if st.button("⬇️", key=f"dw_{uid}", help="Descer"):
+                if idx < len(st.session_state.db["programacao"]) - 1:
+                    prog = st.session_state.db["programacao"]
+                    prog[idx], prog[idx+1] = prog[idx+1], prog[idx]
+                    salvar_dados(st.session_state.db)
+                    st.rerun()
+        with c_del:
+            if st.button("❌", key=f"del_{uid}", help="Excluir"):
+                st.session_state.db["programacao"].pop(idx)
+                salvar_dados(st.session_state.db)
+                st.rerun()
 
-        c[1].text_input("Loc", value=l_val, key=f"l_{uid}", label_visibility="collapsed", on_change=update_val, args=(idx, "Locação", f"l_{uid}"))
-        c[2].text_input("Etp", value=e_val, key=f"e_{uid}", label_visibility="collapsed", on_change=update_val, args=(idx, "Etapa", f"e_{uid}"))
-        c[3].text_input("Resp", value=r_val, key=f"r_{uid}", label_visibility="collapsed", on_change=update_val, args=(idx, "Responsável", f"r_{uid}"))
-        c[4].text_input("Tmp", value=f"{int(h_val):02d}:{int(m_val):02d}", key=f"t_{uid}", label_visibility="collapsed", on_change=update_time, args=(idx, f"t_{uid}"))
+    # ==========================================
+    # 4. CÁLCULO FINAL E BOTÕES DE AÇÃO
+    # ==========================================
+    st.divider()
+    st.subheader("🎯 Resumo Operacional")
 
-        if c[5].button("⬆️", key=f"up_{uid}") and idx > 0:
-            st.session_state.db["programacao"][idx], st.session_state.db["programacao"][idx-1] = st.session_state.db["programacao"][idx-1], st.session_state.db["programacao"][idx]
+    total_horas = sum(int(item.get("Horas", 0)) for item in st.session_state.db["programacao"])
+    total_minutos = sum(int(item.get("Minutos", 0)) for item in st.session_state.db["programacao"])
+
+    total_horas += total_minutos // 60
+    total_minutos = total_minutos % 60
+
+    inicio_datetime = datetime.datetime.combine(data_inicio, hora_inicio)
+    termino_datetime = inicio_datetime + datetime.timedelta(hours=total_horas, minutes=total_minutos)
+
+    colA, colB = st.columns(2)
+    with colA:
+        st.metric(label="Duração Total Estimada", value=f"{int(total_horas):02d}h {int(total_minutos):02d}m")
+    with colB:
+        st.metric(label="Previsão de Prontidão", value=termino_datetime.strftime("%d/%m/%Y às %H:%M"))
+
+    st.divider()
+    
+    col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
+    
+    with col_btn1:
+        components.html(
+            f"""
+            <button onclick="window.parent.print()" style="
+                background-color: {AKOFS_RED};
+                color: white;
+                padding: 0.5rem 1rem;
+                border: none;
+                border-radius: 0.5rem;
+                font-weight: 600;
+                width: 100%;
+                cursor: pointer;
+                font-family: 'Source Sans Pro', sans-serif;
+                font-size: 1rem;
+                box-sizing: border-box;
+            ">🖨️ Imprimir / Salvar PDF</button>
+            """,
+            height=45
+        )
+
+    with col_btn2:
+        if st.button("🗑️ Limpar Programação", key="btn_reset_total", use_container_width=True):
+            st.session_state.db["programacao"] = []
             salvar_dados(st.session_state.db)
             st.rerun()
-            
-        if c[6].button("⬇️", key=f"dw_{uid}") and idx < len(st.session_state.db["programacao"])-1:
-            st.session_state.db["programacao"][idx], st.session_state.db["programacao"][idx+1] = st.session_state.db["programacao"][idx+1], st.session_state.db["programacao"][idx]
-            salvar_dados(st.session_state.db)
-            st.rerun()
-            
-        if c[7].button("❌", key=f"del_{uid}"):
-            st.session_state.db["programacao"].pop(idx)
-            salvar_dados(st.session_state.db)
-            st.rerun()
-
-# ==========================================
-# PASSO 4: RESUMO OPERACIONAL E CONTROLES
-# ==========================================
-st.divider()
-st.subheader("🎯 Resumo Operacional")
-
-tot_h = sum(int(i.get("Horas", i.get("h", 0))) for i in st.session_state.db.get("programacao", []))
-tot_m = sum(int(i.get("Minutos", i.get("m", 0))) for i in st.session_state.db.get("programacao", []))
-tot_h += tot_m // 60
-tot_m = tot_m % 60
-
-dt_inicio = datetime.datetime.combine(data_inicio, hora_inicio)
-dt_fim = dt_inicio + datetime.timedelta(hours=tot_h, minutes=tot_m)
-
-colA, colB = st.columns(2)
-colA.metric("Duração Total Estimada", f"{tot_h:02d}h {tot_m:02d}m")
-colB.metric("Previsão de Prontidão", dt_fim.strftime("%d/%m/%Y às %H:%M"))
-
-# Botões de ação isolados na classe .no-print
-st.markdown('<div class="no-print">', unsafe_allow_html=True)
-st.divider()
-cb1, cb2, cb3 = st.columns([1, 1, 2])
-with cb1:
-    btn_html = f"""
-        <button onclick="window.parent.print()" style="
-            background-color: {AKOFS_RED}; color: white; padding: 0.6rem; 
-            border: none; border-radius: 0.5rem; width: 100%; font-weight: bold; 
-            cursor: pointer; font-family: sans-serif; font-size: 1rem;">
-            🖨️ Imprimir PDF A4
-        </button>
-    """
-    components.html(btn_html, height=45)
-
-with cb2:
-    if st.button("🗑️ Limpar Programação", use_container_width=True):
-        st.session_state.db["programacao"] = []
-        salvar_dados(st.session_state.db)
-        st.rerun()
-st.markdown('</div>', unsafe_allow_html=True)
