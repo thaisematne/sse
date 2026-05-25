@@ -1,5 +1,11 @@
 import streamlit as st
-import pandas as pd
+import os
+from PIL import Image
+
+# Força o sistema a buscar a logo na pasta anterior (raiz)
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir)
+logo_path = os.path.join(root_dir, "image_c889bf.png")
 
 st.set_page_config(
     page_title="Validação de Seal Test | Subsea Planner Pro", 
@@ -8,12 +14,18 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Inserção da Logo na Sidebar (Menu Lateral)
-st.sidebar.markdown("## 🔴 AKOFS Offshore")
+# Sidebar com Logo
+if os.path.exists(logo_path):
+    logo = Image.open(logo_path)
+    st.sidebar.image(logo, use_container_width=True)
+else:
+    st.sidebar.markdown("## 🔴 AKOFS Offshore")
 st.sidebar.markdown("---")
 
-st.title("Subsea Planner Pro")
-st.markdown("### Módulo 2: Validação de Seal Test")
+# Título Principal
+AKOFS_RED = "#D32F2F"
+st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
+st.markdown("### Validação de Seal Test")
 st.divider()
 
 tab1, tab2, tab3 = st.tabs(["Pressão Hidrostática", "Pressão Máxima de Teste", "Teste de Estanqueidade"])
