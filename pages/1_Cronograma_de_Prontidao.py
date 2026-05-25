@@ -25,7 +25,7 @@ else:
     st.sidebar.markdown("## 🔴 AKOFS Offshore")
 st.sidebar.markdown("---")
 
-# Título Principal (Sem a palavra "Módulo")
+# Título Principal
 AKOFS_RED = "#D32F2F"
 st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
 st.markdown("### Cronograma de Prontidão")
@@ -76,7 +76,19 @@ def parse_tempo(tempo_str):
     return 0, 0
 
 # ==========================================
-# 1. ÁREA DE INSERÇÃO DE ETAPAS (CHAVES FIXADAS)
+# 1. PARÂMETROS INICIAIS (DATA E HORA)
+# ==========================================
+st.subheader("⏱️ Início da Operação")
+col_d1, col_d2, col_d3 = st.columns([1, 1, 2])
+with col_d1:
+    data_inicio = st.date_input("Data de Início", datetime.date.today())
+with col_d2:
+    hora_inicio = st.time_input("Hora de Início", datetime.time(6, 0))
+    
+st.divider()
+
+# ==========================================
+# 2. ÁREA DE INSERÇÃO DE ETAPAS 
 # ==========================================
 with st.container():
     st.subheader("Adicionar Nova Etapa")
@@ -127,7 +139,7 @@ with st.container():
 st.divider()
 
 # ==========================================
-# 2. LISTA DINÂMICA (EDIÇÃO E REORDENAÇÃO)
+# 3. LISTA DINÂMICA (EDIÇÃO E REORDENAÇÃO)
 # ==========================================
 if st.session_state.db["programacao"]:
     st.subheader("📋 Programação Atual")
@@ -189,16 +201,10 @@ if st.session_state.db["programacao"]:
                 st.rerun()
 
     # ==========================================
-    # 3. CÁLCULO FINAL DE PRONTIDÃO
+    # 4. CÁLCULO FINAL E BOTÕES DE AÇÃO
     # ==========================================
     st.divider()
-    st.subheader("🎯 Análise de Prontidão")
-
-    colA, colB, colC = st.columns(3)
-
-    with colA:
-        data_inicio = st.date_input("Data de Início", datetime.date.today())
-        hora_inicio = st.time_input("Hora de Início", datetime.time(6, 0))
+    st.subheader("🎯 Resumo Operacional")
 
     total_horas = sum(int(item.get("Horas", 0)) for item in st.session_state.db["programacao"])
     total_minutos = sum(int(item.get("Minutos", 0)) for item in st.session_state.db["programacao"])
@@ -209,13 +215,56 @@ if st.session_state.db["programacao"]:
     inicio_datetime = datetime.datetime.combine(data_inicio, hora_inicio)
     termino_datetime = inicio_datetime + datetime.timedelta(hours=total_horas, minutes=total_minutos)
 
-    with colB:
+    colA, colB = st.columns(2)
+    with colA:
         st.metric(label="Duração Total Estimada", value=f"{int(total_horas):02d}h {int(total_minutos):02d}m")
-    with colC:
+    with colB:
         st.metric(label="Previsão de Prontidão", value=termino_datetime.strftime("%d/%m/%Y às %H:%M"))
 
     st.divider()
-    if st.button("🗑️ Apagar Tudo e Começar Novo Registro", key="btn_reset_total"):
-        st.session_state.db["programacao"] = []
-        salvar_dados(st.session_state.db)
-        st.rerun()
+    
+    # Linha de botões finais
+    col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
+    
+    with col_btn1:
+        # Botão personalizado com CSS e JS para imprimir/salvar PDF nativo
+        st.markdown(
+            f"""
+            <a href="javascript:window.print()" class="btn-print">
+                🖨️ Imprimir / Salvar PDF
+            </a>
+            <style>
+            .btn-print {{
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                background-color: {AKOFS_RED};
+                color: white !important;
+                padding: 0.5rem 1rem;
+                text-decoration: none;
+                border-radius: 0.5rem;
+                font-weight: 600;
+                width: 100%;
+                text-align: center;
+                font-family: "Source Sans Pro", sans-serif;
+            }}
+            .btn-print:hover {{
+                background-color: #b71c1c;
+            }}
+            /* Magia para limpar a tela na hora de imprimir o PDF */
+            @media print {{
+                section[data-testid="stSidebar"] {{ display: none !important; }}
+                header[data-testid="stHeader"] {{ display: none !important; }}
+                .btn-print {{ display: none !important; }}
+                .stButton {{ display: none !important; }}
+            }}
+            </style>
+            """,
+            unsafe_allow_html=True
+        )
+
+    with col_btn2:
+        if st.button("🗑️ Limpar Programação", key="btn_reset_total", use_container_width=True):
+            st.session_state.db["programacao"] = []
+            salvar_dados(st.session_state.db)
+            st.rerun()
