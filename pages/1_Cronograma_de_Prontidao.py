@@ -4,9 +4,10 @@ import datetime
 import json
 import os
 import uuid
+import base64
 from PIL import Image
 
-# Força o sistema a buscar a logo na pasta anterior (raiz)
+# 1. CONFIGURAÇÃO DE DIRETÓRIOS E LOGO
 current_dir = os.path.dirname(os.path.abspath(__file__))
 root_dir = os.path.dirname(current_dir)
 logo_path = os.path.join(root_dir, "image_c889bf.png")
@@ -18,19 +19,119 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Sidebar com Logo
+# Função para converter a imagem em Base64 (garante a exibição correta na impressão)
+def obter_base64_imagem(caminho_img):
+    with open(caminho_img, "rb") as img_file:
+        return base64.b64encode(img_file.read()).decode()
+
+# Cores Corporativas
+AKOFS_RED = "#D32F2F"
+
+# --- SIDEBAR PADRÃO DE NAVEGAÇÃO ---
 if os.path.exists(logo_path):
-    logo = Image.open(logo_path)
-    st.sidebar.image(logo, use_container_width=True)
+    logo_lateral = Image.open(logo_path)
+    st.sidebar.image(logo_lateral, use_container_width=True)
 else:
     st.sidebar.markdown("## 🔴 AKOFS Offshore")
 st.sidebar.markdown("---")
+st.sidebar.markdown("### 🛠️ Navigation Menu")
 
-# Título Principal
-AKOFS_RED = "#D32F2F"
-st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
-st.markdown("### Cronograma de Prontidão")
-st.divider()
+# --- CABEÇALHO UNIFICADO (TELA E IMPRESSÃO) ---
+if os.path.exists(logo_path):
+    logo_base64 = obter_base64_imagem(logo_path)
+    header_html = f"""
+    <div class="print-header">
+        <img src="data:image/png;base64,{logo_base64}" class="print-logo-img">
+        <div class="print-header-text">
+            <h1 style="color: {AKOFS_RED}; margin: 0; font-size: 2.2em;">Subsea Planner Pro</h1>
+            <h3 style="margin: 5px 0 0 0; font-weight: normal;">Cronograma de Prontidão</h3>
+        </div>
+    </div>
+    """
+    st.markdown(header_html, unsafe_allow_html=True)
+else:
+    st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
+    st.markdown("### Cronograma de Prontidão")
+
+# --- REGRAS DE ESTILO CSS AVANÇADAS (RESET DE CORES PARA A4) ---
+st.markdown(
+    """
+    <style>
+    /* Estilização do cabeçalho na tela */
+    .print-header {
+        display: flex;
+        align-items: center;
+        margin-bottom: 20px;
+        padding-bottom: 15px;
+        border-bottom: 1px solid #333;
+    }
+    .print-logo-img {
+        height: 55px;
+        margin-right: 20px;
+    }
+    
+    /* ==========================================
+       REGRA DE OURO: ESTILOS EXCLUSIVOS DE IMPRESSÃO
+       ========================================== */
+    @media print {
+        /* Ocultar elementos de interface do Streamlit */
+        section[data-testid="stSidebar"], 
+        header[data-testid="stHeader"], 
+        .stButton, 
+        iframe,
+        div[data-testid="stNotification"] { 
+            display: none !important; 
+        }
+        
+        /* Forçar fundo branco e texto escuro em toda a página */
+        .main, .block-container, body, html, [data-testid="stAppViewContainer"], .stApp {
+            background-color: #FFFFFF !important;
+            color: #000000 !important;
+        }
+        
+        /* Forçar todos os textos, títulos e labels para preto */
+        h1, h2, h3, h4, h5, h6, p, label, smal, span, div {
+            color: #000000 !important;
+        }
+        
+        /* Ajustar os campos de texto para formato de relatório impresso (sem caixas pretas) */
+        input, select, textarea, div[data-testid="stTextInput"] div {
+            background-color: transparent !important;
+            color: #000000 !important;
+            border: none !important;
+            border-bottom: 1px dashed #666 !important; /* Transforma caixas em linhas elegantes de relatório */
+            box-shadow: none !important;
+        }
+        
+        /* Configuração estrita da folha A4 para evitar quebra de página */
+        @page {
+            size: A4 portrait;
+            margin: 10mm 12mm 10mm 12mm;
+        }
+        
+        /* Compactar o layout ao máximo para garantir que caiba em uma única página */
+        .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+        }
+        .print-header {
+            display: flex !important;
+            border-bottom: 2px solid #000000 !important;
+            margin-bottom: 15px !important;
+        }
+        div[data-testid="stHorizontalBlock"] {
+            gap: 5px !important;
+            margin-bottom: 0px !important;
+        }
+        hr {
+            margin: 8px 0 !important;
+            border-color: #000000 !important;
+        }
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 ARQUIVO_DADOS = "dados_prontidao.json"
 
@@ -144,7 +245,6 @@ st.divider()
 # ==========================================
 if st.session_state.db["programacao"]:
     st.subheader("📋 Programação Atual")
-    st.info("💡 **Edite os textos livremente**. Digite o tempo como HH:MM e use as setas para reordenar.")
 
     hc1, hc2, hc3, hc4, hc5, hc_acoes = st.columns([0.4, 2, 3, 1.5, 1.2, 1.5])
     hc1.write("**#**")
@@ -224,26 +324,11 @@ if st.session_state.db["programacao"]:
 
     st.divider()
     
-    # Injetar CSS global para limpar a tela durante a impressão
-    st.markdown(
-        """
-        <style>
-        @media print {
-            section[data-testid="stSidebar"] { display: none !important; }
-            header[data-testid="stHeader"] { display: none !important; }
-            .stButton { display: none !important; }
-            iframe { display: none !important; } /* Esconde o botão HTML de imprimir */
-        }
-        </style>
-        """,
-        unsafe_allow_html=True
-    )
-    
     # Linha de botões finais
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
     
     with col_btn1:
-        # Usando um componente HTML real para acionar a impressão na janela mãe
+        # Aciona a impressão diretamente na página mãe sem abrir novas abas
         components.html(
             f"""
             <button onclick="window.parent.print()" style="
