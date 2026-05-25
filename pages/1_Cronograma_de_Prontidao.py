@@ -19,7 +19,6 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Função para converter a imagem em Base64
 def obter_base64_imagem(caminho_img):
     with open(caminho_img, "rb") as img_file:
         return base64.b64encode(img_file.read()).decode()
@@ -34,7 +33,6 @@ if os.path.exists(logo_path):
 else:
     st.sidebar.markdown("## 🔴 AKOFS Offshore")
 st.sidebar.markdown("---")
-st.sidebar.markdown("### 🛠️ Navigation Menu")
 
 # --- CABEÇALHO UNIFICADO (TELA E IMPRESSÃO) ---
 if os.path.exists(logo_path):
@@ -50,14 +48,14 @@ if os.path.exists(logo_path):
     """
     st.markdown(header_html, unsafe_allow_html=True)
 else:
-    st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
-    st.markdown("### Cronograma de Prontidão")
+    st.markdown(f"<h1 style='color: {AKOFS_RED}; text-align: center;'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
+    st.markdown("<h3 style='text-align: center;'>Cronograma de Prontidão</h3>", unsafe_allow_html=True)
 
-# --- REGRAS DE ESTILO CSS AVANÇADAS (BLINDAGEM CONTRA FUNDO ESCURO) ---
+# --- REGRAS DE ESTILO CSS AVANÇADAS (COMPACTAÇÃO A4 E FUNDO BRANCO) ---
 st.markdown(
     """
     <style>
-    /* Estilização do cabeçalho na tela */
+    /* Estilização do cabeçalho na tela (Padrão) */
     .print-header {
         display: flex;
         align-items: center;
@@ -74,20 +72,20 @@ st.markdown(
        REGRA DE OURO: ESTILOS EXCLUSIVOS DE IMPRESSÃO
        ========================================== */
     @media print {
-        /* Força o navegador a renderizar as cores exatas do CSS de impressão */
+        /* Força Cores Exatas e Textos Pretos */
         * {
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
-            color: #000000 !important; /* TODO o texto fica preto */
+            color: #000000 !important;
         }
         
-        /* Configuração de folha Paisagem (Landscape) */
+        /* Configuração de Folha Paisagem com Margens Mínimas */
         @page {
             size: A4 landscape;
-            margin: 10mm 15mm;
+            margin: 5mm 10mm;
         }
         
-        /* Ocultar elementos de interface */
+        /* Ocultar Interface do Streamlit */
         section[data-testid="stSidebar"], 
         header[data-testid="stHeader"], 
         .stButton, 
@@ -96,35 +94,66 @@ st.markdown(
             display: none !important; 
         }
         
-        /* FORÇA BRUTA contra fundos pretos do Streamlit */
+        /* ATAQUE DIRETO AOS FUNDOS ESCUROS (Select e Time Input) */
         html, body, .stApp, .main, .block-container, [data-testid="stAppViewContainer"],
-        div[data-baseweb="input"], div[data-baseweb="base-input"],
-        div[data-testid="stMetric"], div[data-testid="stVerticalBlock"] {
+        div[data-baseweb="input"], div[data-baseweb="base-input"], 
+        div[data-baseweb="select"], div[data-testid="stTimeInput"],
+        div[data-testid="stSelectbox"], div[data-testid="stDateInput"] {
             background-color: #FFFFFF !important;
             background: #FFFFFF !important;
         }
         
-        /* Ajustar os campos de texto para não parecerem botões/caixas pretas */
+        /* Limpeza nas sub-divs dos componentes de input */
+        div[data-baseweb="select"] > div, 
+        div[data-baseweb="base-input"] > input,
+        div[class*="stSelectbox"] > div,
+        div[class*="stTimeInput"] > div,
         input, select, textarea {
             background-color: transparent !important;
+            background: transparent !important;
             border: none !important;
             border-bottom: 1px dashed #999 !important;
             box-shadow: none !important;
-            padding: 2px !important;
+            color: #000000 !important;
         }
         
-        /* Layout mais esparso e organizado para folha deitada */
-        .block-container {
-            padding-top: 0rem !important;
-        }
+        /* Centralização do Cabeçalho na Folha A4 */
         .print-header {
             display: flex !important;
+            justify-content: center !important;
             border-bottom: 2px solid #000000 !important;
-            margin-bottom: 20px !important;
+            margin-bottom: 10px !important;
+            padding-bottom: 5px !important;
             background: #FFFFFF !important;
         }
+        .print-header-text {
+            text-align: center !important;
+        }
+        .print-logo-img {
+            height: 45px !important;
+        }
+        
+        /* COMPACTAÇÃO DE FONTES E ESPAÇOS (Caber em 1 Página) */
+        p, div, span, label, input, .stMarkdown {
+            font-size: 10pt !important;
+            line-height: 1.1 !important;
+            margin-bottom: 0px !important;
+        }
+        h1 { font-size: 16pt !important; }
+        h3 { font-size: 12pt !important; }
+        
+        .block-container {
+            padding-top: 0rem !important;
+            padding-bottom: 0rem !important;
+        }
         div[data-testid="stHorizontalBlock"] {
-            gap: 10px !important;
+            gap: 5px !important;
+            margin-bottom: 0px !important;
+            padding-bottom: 0px !important;
+        }
+        hr {
+            margin: 5px 0 !important;
+            border-color: #000000 !important;
         }
     }
     </style>
@@ -323,7 +352,6 @@ if st.session_state.db["programacao"]:
 
     st.divider()
     
-    # Linha de botões finais
     col_btn1, col_btn2, col_btn3 = st.columns([1, 1, 2])
     
     with col_btn1:
