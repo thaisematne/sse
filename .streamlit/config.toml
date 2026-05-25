@@ -1,0 +1,7 @@
+[theme]
+# Paleta Corporate AKOFS (Dark Mode)
+primaryColor = "#D32F2F"    # Vermelho AKOFS (Botões principais e destaques)
+backgroundColor = "#0E1117" # Fundo escuro padrão de sistemas (Ponte/CDE)
+secondaryBackgroundColor = "#262730" # Fundo do menu lateral (Sidebar)
+textColor = "#FAFAFA"       # Texto claro para contraste
+font = "sans serif"         # Fonte limpa e moderna
