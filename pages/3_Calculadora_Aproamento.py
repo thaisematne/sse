@@ -6,20 +6,20 @@ st.set_page_config(page_title="Plano de Clash 2D", layout="wide")
 st.title("Módulo 3: Plano Tático de Segurança (As-Built Skandi Santos)")
 
 # --- 1. Configurações de Offset (Padrão As-Built) ---
-with st.expander("⚙️ Controle Dimensional - Posições no Convés (Valores Default conforme As-Built)"):
+with st.expander("⚙️ Controle Dimensional - Posições no Convés (Valores Default)"):
     col_d1, col_d2 = st.columns(2)
-    # Valores baseados no seu documento de controle dimensional
-    x_xlx23 = col_d1.number_input("X - ROV XLX-23", value=4.50)
-    y_xlx23 = col_d1.number_input("Y - ROV XLX-23", value=-12.50)
+    # Valores baseados nas coordenadas passadas
+    x_xlx23 = col_d1.number_input("X - ROV XLX-23", value=0.0)
+    y_xlx23 = col_d1.number_input("Y - ROV XLX-23", value=5.0)
     
-    x_xlx24 = col_d2.number_input("X - ROV XLX-24", value=-4.50)
-    y_xlx24 = col_d2.number_input("Y - ROV XLX-24", value=-12.50)
+    x_xlx24 = col_d2.number_input("X - ROV XLX-24", value=12.0)
+    y_xlx24 = col_d2.number_input("Y - ROV XLX-24", value=5.0)
     
-    x_umb = col_d1.number_input("X - Umbilical de Controle", value=5.20)
-    y_umb = col_d1.number_input("Y - Umbilical de Controle", value=14.80)
+    x_umb = col_d1.number_input("X - Umbilical de Controle", value=-12.0)
+    y_umb = col_d1.number_input("Y - Umbilical de Controle", value=5.0)
     
-    x_crane = col_d2.number_input("X - Guindaste", value=-10.50)
-    y_crane = col_d2.number_input("Y - Guindaste", value=-22.00)
+    x_crane = col_d2.number_input("X - Guindaste", value=16.0)
+    y_crane = col_d2.number_input("Y - Guindaste", value=-20.0)
 
 # --- 2. Parâmetros de Operação ---
 col_op1, col_op2 = st.columns(2)
