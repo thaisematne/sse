@@ -57,37 +57,36 @@ with col1:
 with col2:
     fator_densidade = st.number_input("Fator de Conversão (psi/m)", value=1.46, step=0.01) # Default alterado para 1.46
 with col3:
-    rwp = st.number_input("RWP do Equipamento (psi)", min_value=0.0, value=5000.0, step=100.0)
+    rwp = st.number_input("RWP do Equipamento (psi)", min_value=0.0, value=10000.0, step=100.0) # Default alterado para 10.000
 
+# Cálculos Base
 pressao_hidrostatica = profundidade * fator_densidade
-pressao_max_hpu = rwp - pressao_hidrostatica
+pressao_teste_hpu = rwp - pressao_hidrostatica
 
 col_r1, col_r2 = st.columns(2)
 col_r1.metric("Pressão Hidrostática (PLDA)", f"{pressao_hidrostatica:.2f} psi")
-col_r2.metric("Pressão Máxima Permitida na HPU", f"{pressao_max_hpu:.2f} psi")
+col_r2.metric("Pressão Máxima de Teste na HPU", f"{pressao_teste_hpu:.2f} psi")
 
 st.divider()
 
 # ==========================================
 # ETAPA 2: CONVERSOR ABSOLUTA / RELATIVA SUBSEA
 # ==========================================
-st.markdown("### 2. Conversor de Pressão Subsea (Absoluta ↔ Relativa)")
-st.write("Esta conversão vincula e utiliza a Pressão Hidrostática calculada na Etapa 1.")
-col_c1, col_c2, col_c3 = st.columns([1, 1, 2])
+st.markdown("### 2. Conversor de Pressão (Equipamento Subsea)")
+st.write("Converte valores usando a regra: **Pressão Absoluta = Pressão Relativa + Pressão Hidrostática**.")
+col_c1, col_c2 = st.columns(2)
 
 with col_c1:
-    p_atm = st.number_input("Pressão Atmosférica Local (psi)", value=14.7, step=0.1)
+    direcao_conversao = st.selectbox("Direção da Conversão", ["Relativa ➔ Absoluta", "Absoluta ➔ Relativa"])
 with col_c2:
-    direcao_conversao = st.selectbox("Direção da Conversão", ["Relativa ➔ Absoluta (Fundo)", "Absoluta (Fundo) ➔ Relativa"])
-with col_c3:
     valor_converter = st.number_input("Valor a Converter (psi)", value=0.0, step=10.0)
 
-if direcao_conversao == "Relativa ➔ Absoluta (Fundo)":
-    resultado_conv = valor_converter + pressao_hidrostatica + p_atm
-    st.info(f"**Resultado:** {valor_converter:.2f} psig + {pressao_hidrostatica:.2f} psi (Hidrostática) + {p_atm:.2f} psi (Atm) = **{resultado_conv:.2f} psia**")
+if direcao_conversao == "Relativa ➔ Absoluta":
+    resultado_conv = valor_converter + pressao_hidrostatica
+    st.info(f"**Resultado:** {valor_converter:.2f} (Relativa) + {pressao_hidrostatica:.2f} (Hidrostática) = **{resultado_conv:.2f} Absoluta**")
 else:
-    resultado_conv = valor_converter - pressao_hidrostatica - p_atm
-    st.info(f"**Resultado:** {valor_converter:.2f} psia - {pressao_hidrostatica:.2f} psi (Hidrostática) - {p_atm:.2f} psi (Atm) = **{resultado_conv:.2f} psig**")
+    resultado_conv = valor_converter - pressao_hidrostatica
+    st.info(f"**Resultado:** {valor_converter:.2f} (Absoluta) - {pressao_hidrostatica:.2f} (Hidrostática) = **{resultado_conv:.2f} Relativa**")
 
 st.divider()
 
@@ -99,10 +98,12 @@ st.markdown("### 3. Teste de Estanqueidade e Laudo")
 # --- Configurações do Teste ---
 col_t1, col_t2, col_t3 = st.columns(3)
 with col_t1:
-    p_teste_nominal = st.number_input("Pressão Nominal de Teste (psig)", min_value=1.0, value=5000.0, step=100.0)
+    # A pressão herda automaticamente o valor calculado no item 1
+    valor_seguro_hpu = float(max(1.0, pressao_teste_hpu))
+    p_teste_nominal = st.number_input("Pressão Nominal de Teste (psi)", min_value=1.0, value=valor_seguro_hpu, step=100.0)
 with col_t2:
-    tipo_leitura = st.selectbox("Leitura dos Sensores", ["Relativa (psig)", "Absoluta (psia)"], 
-                                help="Selecione Absoluta se o sensor subsea registrar a pressão total (incluindo a coluna d'água).")
+    tipo_leitura = st.selectbox("Leitura dos Sensores", ["Relativa", "Absoluta"], 
+                                help="Selecione Absoluta se o sensor contabiliza a coluna d'água.")
 with col_t3:
     portas_sel = st.radio("Portas em Teste", ["Porta A", "Porta B", "Portas A e B Simultâneas"])
 
@@ -151,8 +152,8 @@ if st.button("Gerar Laudo de 10 Minutos", type="primary"):
     if len(df_leituras) <= idx_0 + 2:
         st.error(f"Preencha as pressões dos minutos {inicio_selecionado + 5} e {inicio_selecionado + 10} na tabela acima.")
     else:
-        if tipo_leitura == "Absoluta (psia)":
-            st.info(f"ℹ️ **Conversão Automática Subsea:** Sensores em Absoluta. Subtraindo {pressao_hidrostatica:.2f} psi (Hidrostática) e {p_atm:.2f} psi (Atm) para obter o equivalente relativo.")
+        if tipo_leitura == "Absoluta":
+            st.info(f"ℹ️ **Conversão Automática Aplicada:** Sensores lendo em Absoluta. O sistema subtraiu {pressao_hidrostatica:.2f} psi (Pressão Hidrostática) para analisar o comportamento Relativo.")
 
         # Cria colunas lado a lado para laudos individuais ou simultâneos
         cols_resultado = st.columns(len(colunas_analise))
@@ -165,34 +166,37 @@ if st.button("Gerar Laudo de 10 Minutos", type="primary"):
                 p_5 = df_leituras.iloc[idx_0 + 1][porta]
                 p_10 = df_leituras.iloc[idx_0 + 2][porta]
 
-                # Conversão matemática automatizada baseada na Etapa 1 e 2
-                if tipo_leitura == "Absoluta (psia)":
-                    p_0_exib = p_0 - pressao_hidrostatica - p_atm
-                    p_5_exib = p_5 - pressao_hidrostatica - p_atm
-                    p_10_exib = p_10 - pressao_hidrostatica - p_atm
+                # Conversão matemática automatizada baseada na regra do equipamento
+                if tipo_leitura == "Absoluta":
+                    p_0_exib = p_0 - pressao_hidrostatica
+                    p_5_exib = p_5 - pressao_hidrostatica
+                    p_10_exib = p_10 - pressao_hidrostatica
                 else:
                     p_0_exib, p_5_exib, p_10_exib = p_0, p_5, p_10
 
-                st.write(f"- **P0 (Início):** {p_0_exib:.1f} psig")
-                st.write(f"- **P5 (Intermediário):** {p_5_exib:.1f} psig")
-                st.write(f"- **P10 (Final):** {p_10_exib:.1f} psig")
+                st.write(f"- **P0 (Início):** {p_0_exib:.1f} psi")
+                st.write(f"- **P5 (Intermediário):** {p_5_exib:.1f} psi")
+                st.write(f"- **P10 (Final):** {p_10_exib:.1f} psi")
 
-                # Deltas de queda (independem da unidade, mas usam a escala real)
+                # Deltas de queda
                 queda_5_iniciais = p_0 - p_5
                 queda_5_finais = p_5 - p_10
+                queda_total = p_0 - p_10 # Soma das quedas
 
                 st.markdown("**📉 Quedas Registradas:**")
-                st.write(f"Iniciais (0-5m): **{queda_5_iniciais:.1f} psi** | Finais (5-10m): **{queda_5_finais:.1f} psi**")
+                st.write(f"Iniciais (0-5m): **{queda_5_iniciais:.1f} psi**")
+                st.write(f"Finais (5-10m): **{queda_5_finais:.1f} psi**")
+                st.write(f"Queda Total (10m): **{queda_total:.1f} psi**")
 
                 # Critérios rígidos de diagnóstico
                 if queda_5_iniciais <= limite_042:
                     if queda_5_finais <= limite_042 and queda_5_finais < queda_5_iniciais:
-                        st.success(f"🏆 **{porta} APROVADA:** Queda nos 5 minutos finais é decrescente e abaixo de 0,42%.")
+                        st.success(f"🏆 **{porta} APROVADA:** Queda nos 5 min. finais é decrescente e abaixo de 0,42%.")
                     elif queda_5_finais >= queda_5_iniciais:
-                        st.error(f"❌ **{porta} REPROVADA:** A taxa de queda nos 5 minutos finais NÃO é decrescente.")
+                        st.error(f"❌ **{porta} REPROVADA:** A taxa de queda nos 5 min. finais NÃO é decrescente.")
                     else:
-                        st.error(f"❌ **{porta} REPROVADA:** Queda nos 5 minutos finais ultrapassou o limite de 0,42%.")
+                        st.error(f"❌ **{porta} REPROVADA:** Queda nos 5 min. finais ultrapassou o limite de 0,42%.")
                 elif queda_5_iniciais < limite_063:
-                    st.warning(f"🔄 **{porta} - REPRESSURIZAR:** Queda inicial entre 0,42% e 0,63%. Descarte a janela ou reinicie.")
+                    st.warning(f"🔄 **{porta} - AÇÃO REQUERIDA:** Queda inicial entre 0,42% e 0,63%. Repressurizar ou aguardar nova janela.")
                 else:
-                    st.error(f"❌ **{porta} REPROVADA:** Queda inicial ultrapassou o limite crítico de 0,63%.")
+                    st.error(f"❌ **{porta} REPROVADA:** Queda inicial ultrapassou o limite crítico de 0,63%. Repressurizar.")
