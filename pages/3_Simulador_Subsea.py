@@ -50,7 +50,7 @@ st.divider()
 # 2. CONTROLE DIMENSIONAL
 # ==========================================
 with st.expander("⚙️ Controle Dimensional - Posições no Convés (As-Built)"):
-    nome_equip = st.text_input("Nome do Equipamento/Estrutura", value="BAP")
+    nome_equip = st.text_input("Nome do Equipamento/Estrutura", value="Equipamento")
     
     col_d1, col_d2 = st.columns(2)
     x_xlx23 = col_d1.number_input("X - ROV XLX-23", value=0.0)
@@ -62,8 +62,8 @@ with st.expander("⚙️ Controle Dimensional - Posições no Convés (As-Built)
     x_umb = col_d1.number_input("X - Umbilical de Controle", value=-12.0)
     y_umb = col_d1.number_input("Y - Umbilical de Controle", value=5.0)
     
-    x_crane = col_d2.number_input(f"X - Guindaste ({nome_equip})", value=16.0)
-    y_crane = col_d2.number_input(f"Y - Guindaste ({nome_equip})", value=-20.0)
+    x_crane = col_d2.number_input("X - Guindaste (Cabo de Descida)", value=16.0)
+    y_crane = col_d2.number_input("Y - Guindaste (Cabo de Descida)", value=-20.0)
 
 # ==========================================
 # 3. PAINEL DE OPERAÇÃO
@@ -72,7 +72,7 @@ st.markdown("### Parâmetros Dinâmicos da Operação")
 st.info("Simule a influência da proa e da correnteza no tether management e disposição de cabos na LDA.")
 
 col_op1, col_op2, col_op3 = st.columns([2, 1, 1])
-aproamento = col_op1.slider("Aproamento do Skandi Santos (°)", 0, 359, 0)
+aproamento = col_op1.slider("Aproamento do AKOFS Santos (°)", 0, 359, 0)
 eq_heading = col_op2.number_input("Heading de Assentamento do ROV (°)", min_value=0, max_value=359, value=120, help="Direção para onde o ROV estará olhando quando estiver docado no painel.")
 lda = col_op3.number_input("Lâmina D'água (m)", value=2000.0)
 
@@ -81,7 +81,7 @@ derivas = {}
 cols = st.columns(4)
 for i, nome in enumerate(["XLX-23", "XLX-24", "Umbilical", "Guindaste"]):
     with cols[i]:
-        label_exibicao = nome_equip if nome == "Guindaste" else nome
+        label_exibicao = "Guindaste" if nome == "Guindaste" else nome
         d = st.number_input(f"Dist. (m) {label_exibicao}", value=0.0, key=f"dist_{nome}")
         dir_ = st.number_input(f"Dir. (°) {label_exibicao}", value=0.0, key=f"dir_{nome}")
         derivas[nome] = (d, np.radians(dir_))
@@ -123,12 +123,12 @@ tab1, tab2 = st.tabs(["🗺️ Visão Global (Superfície e Descida)", "⚓ Vis�
 # --- TAB 1: VISÃO GLOBAL ---
 with tab1:
     fig1 = go.Figure()
-    fig1.add_trace(go.Scatter(x=nx, y=ny, fill="toself", fillcolor="lightgray", line=dict(color="black"), name="Skandi Santos"))
+    fig1.add_trace(go.Scatter(x=nx, y=ny, fill="toself", fillcolor="lightgray", line=dict(color="black"), name="AKOFS Santos"))
 
     for nome in equip_coords.keys():
         xs, ys = pos_superficie[nome]
         xf, yf = pos_fundo[nome]
-        label_exibicao = nome_equip if nome == "Guindaste" else nome
+        label_exibicao = "Guindaste" if nome == "Guindaste" else nome
         
         fig1.add_trace(go.Scatter(x=[xs, xf], y=[ys, yf], mode='lines+markers', name=label_exibicao, line=dict(color=cores[nome])))
         fig1.add_trace(go.Scatter(
@@ -238,7 +238,7 @@ with tab2:
             ry_rot = [rov_y + (-x*np.sin(h_rov) + y*np.cos(h_rov)) for x, y in rov_shape]
             fig2.add_trace(go.Scatter(x=rx_rot, y=ry_rot, fill="toself", fillcolor=cor, line=dict(color="black"), name=f"ROV {rov}", hoverinfo="name"))
             
-            # Tether (Linha de Fundo)
+            # Tether
             fig2.add_trace(go.Scatter(x=[tms_x, rov_x], y=[tms_y, rov_y], mode='lines', line=dict(color=cor, width=2, dash='dot'), name=f"Tether {rov}"))
 
         fig2.update_layout(
