@@ -1,6 +1,7 @@
 import streamlit as st
 from PIL import Image
 import os
+import base64
 
 # ==========================================
 # 1. CONFIGURAÇÃO DA PÁGINA E ESTILO
@@ -15,7 +16,34 @@ st.set_page_config(
 # Cores Corporativas AKOFS
 AKOFS_RED = "#D32F2F"
 
-# CSS para centralizar imagem e estilizar cards
+# ==========================================
+# 2. LOGO FIXO NO TOPO DO MENU LATERAL (ACIMA DOS LINKS)
+# ==========================================
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir) if "pages" in current_dir else current_dir
+sidebar_logo_path = os.path.join(root_dir, "image_c889bf.png")
+logo_corpo_path = os.path.join(root_dir, "image_c88946.jpg")
+
+if os.path.exists(sidebar_logo_path):
+    with open(sidebar_logo_path, "rb") as f:
+        sidebar_logo_b64 = base64.b64encode(f.read()).decode()
+    # Injeta o logo centralizado exatamente acima da lista de páginas nativa
+    st.markdown(f"""
+        <style>
+        [data-testid="stSidebarNav"]::before {{
+            content: "";
+            display: block;
+            background-image: url("data:image/png;base64,{sidebar_logo_b64}");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            height: 70px;
+            margin: 20px 15px 10px 15px;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
+# CSS para o visual do corpo do Dashboard
 st.markdown(f"""
     <style>
     .main {{
@@ -47,25 +75,12 @@ st.markdown(f"""
 """, unsafe_allow_html=True)
 
 # ==========================================
-# 2. LOGO E MENU LATERAL
+# 3. CABEÇALHO E LOGO CENTRALIZADO NO CORPO
 # ==========================================
-current_dir = os.path.dirname(os.path.abspath(__file__))
-logo_path = os.path.join(current_dir, "image_c88946.jpg")
-
-if os.path.exists(logo_path):
-    st.sidebar.image(logo_path, use_container_width=True)
-st.sidebar.markdown("---")
-st.sidebar.markdown("### Navegação Rápida")
-st.sidebar.write("Selecione um módulo na tela principal.")
-
-# ==========================================
-# 3. CABEÇALHO E LOGO CENTRALIZADO
-# ==========================================
-# Centralização da imagem usando colunas (Capa do Dashboard)
 col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
 with col_img2:
-    if os.path.exists(logo_path):
-        st.image(logo_path, use_container_width=True)
+    if os.path.exists(logo_corpo_path):
+        st.image(logo_corpo_path, use_container_width=True)
     else:
         st.markdown(f"<h1 style='text-align: center; color: {AKOFS_RED};'>🔴 AKOFS Offshore</h1>", unsafe_allow_html=True)
 
