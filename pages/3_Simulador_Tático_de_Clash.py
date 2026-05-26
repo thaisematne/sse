@@ -2,13 +2,11 @@ import streamlit as st
 import numpy as np
 import plotly.graph_objects as go
 import os
-from PIL import Image
+import base64
 
-# Força o sistema a buscar a logo na pasta anterior (raiz)
-current_dir = os.path.dirname(os.path.abspath(__file__))
-root_dir = os.path.dirname(current_dir)
-logo_path = os.path.join(root_dir, "image_c889bf.png")
-
+# ==========================================
+# 0. CONFIGURAÇÃO DA PÁGINA E LOGO NO MENU
+# ==========================================
 st.set_page_config(
     page_title="Simulador Tático de Clash | Subsea Planner Pro", 
     page_icon="⚓", 
@@ -16,21 +14,41 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Sidebar com Logo
-if os.path.exists(logo_path):
-    logo = Image.open(logo_path)
-    st.sidebar.image(logo, use_container_width=True)
-else:
-    st.sidebar.markdown("## 🔴 AKOFS Offshore")
-st.sidebar.markdown("---")
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir) if "pages" in current_dir else current_dir
+sidebar_logo_path = os.path.join(root_dir, "image_c889bf.png")
 
-# Título Principal
+if os.path.exists(sidebar_logo_path):
+    with open(sidebar_logo_path, "rb") as f:
+        sidebar_logo_b64 = base64.b64encode(f.read()).decode()
+    
+    css_sidebar = """
+    <style>
+    [data-testid="stSidebarNav"]::before {
+        content: "";
+        display: block;
+        background-image: url("data:image/png;base64,LOGO_BASE64_AQUI");
+        background-size: contain;
+        background-repeat: no-repeat;
+        background-position: center;
+        height: 70px;
+        margin: 20px 15px 10px 15px;
+    }
+    </style>
+    """
+    st.markdown(css_sidebar.replace("LOGO_BASE64_AQUI", sidebar_logo_b64), unsafe_allow_html=True)
+
+# ==========================================
+# 1. CABEÇALHO
+# ==========================================
 AKOFS_RED = "#D32F2F"
 st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
 st.markdown("### Simulador Tático de Clash")
 st.divider()
 
-# --- 1. Configurações de Offset ---
+# ==========================================
+# 2. CONTROLE DIMENSIONAL
+# ==========================================
 with st.expander("⚙️ Controle Dimensional - Posições no Convés (As-Built)"):
     col_d1, col_d2 = st.columns(2)
     x_xlx23 = col_d1.number_input("X - ROV XLX-23", value=0.0)
@@ -45,7 +63,9 @@ with st.expander("⚙️ Controle Dimensional - Posições no Convés (As-Built)
     x_crane = col_d2.number_input("X - Guindaste (BAP/Equipamento)", value=16.0)
     y_crane = col_d2.number_input("Y - Guindaste (BAP/Equipamento)", value=-20.0)
 
-# --- 2. Painel Principal de Operação ---
+# ==========================================
+# 3. PAINEL DE OPERAÇÃO
+# ==========================================
 st.markdown("### Parâmetros Dinâmicos da Operação")
 st.info("Simule a influência da proa e da correnteza no tether management e disposição de cabos na LDA.")
 
@@ -92,12 +112,12 @@ theta = np.linspace(0, 2*np.pi, 50)
 
 st.divider()
 
-# --- Separação das Visões ---
+# ==========================================
+# 4. VISÕES E SIMULAÇÃO
+# ==========================================
 tab1, tab2 = st.tabs(["🗺️ Visão Global (Superfície e Descida)", "⚓ Visão Tática de Fundo (Docagem BAP)"])
 
-# ==========================================
-# TAB 1: VISÃO GLOBAL
-# ==========================================
+# --- TAB 1: VISÃO GLOBAL ---
 with tab1:
     fig1 = go.Figure()
     # Navio Forte
@@ -116,10 +136,7 @@ with tab1:
     fig1.update_layout(yaxis=dict(scaleanchor="x", scaleratio=1), height=700, template="plotly_white")
     st.plotly_chart(fig1, use_container_width=True)
 
-
-# ==========================================
-# TAB 2: VISÃO TÁTICA DE FUNDO COM BAP E ROV SHAPES
-# ==========================================
+# --- TAB 2: VISÃO TÁTICA DE FUNDO ---
 with tab2:
     st.markdown("### Configuração da Manobra")
     col_m1, col_m2 = st.columns(2)
@@ -142,73 +159,10 @@ with tab2:
             # Marcação do Dive Point (Superfície)
             fig2.add_trace(go.Scatter(x=[xs], y=[ys], mode='markers+text', marker=dict(size=10, symbol="x", color=cor, line=dict(width=2)), name=f"DP {nome}", text=[f"DP {nome}"], textposition="top right"))
             
-            # Linha de descida do cabo na água (Superfície -> Fundo)
+            # Linha de descida do cabo na água
             fig2.add_trace(go.Scatter(x=[xs, xf], y=[ys, yf], mode='lines', line=dict(color=cor, width=1, dash='solid'), name=f"Cabo {nome}", opacity=0.4))
             
-            # Se for o Umbilical, desenha ele no fundo com seu Safety Zone
+            # Umbilical no fundo
             if nome == "Umbilical":
                 fig2.add_trace(go.Scatter(x=[xf], y=[yf], mode='markers+text', marker=dict(size=12, symbol="circle", color=cor), name="Umbilical (Fundo)", text=["Umbilical na Água"], textposition="bottom center"))
-                fig2.add_trace(go.Scatter(x=xf + 5*np.cos(theta), y=yf + 5*np.sin(theta), mode='lines', line=dict(color=cor, dash='dash'), name=f"Safety Umbilical", fill='toself', opacity=0.1))
-
-        # 3. Desenhar o BAP Geométrico
-        x_eq, y_eq = pos_fundo["Guindaste"]
-        eq_rad = np.radians(eq_heading)
-        dim_eq = 4.0
-        
-        box = [[-dim_eq/2, -dim_eq/2], [dim_eq/2, -dim_eq/2], [dim_eq/2, dim_eq/2], [-dim_eq/2, dim_eq/2], [-dim_eq/2, -dim_eq/2]]
-        bx = [x_eq + (x*np.cos(eq_rad) + y*np.sin(eq_rad)) for x, y in box]
-        by = [y_eq + (-x*np.sin(eq_rad) + y*np.cos(eq_rad)) for x, y in box]
-        fig2.add_trace(go.Scatter(x=bx, y=by, fill="toself", fillcolor="lightgreen", line=dict(color="darkgreen", width=3), name="BAP"))
-        
-        faces = [("F1", 0), ("F2", np.pi/2), ("F3", np.pi), ("F4", -np.pi/2)]
-        for nome_face, ang_offset in faces:
-            f_ang = eq_rad + ang_offset
-            fx = x_eq + (dim_eq/2 + 1.2) * np.sin(f_ang)
-            fy = y_eq + (dim_eq/2 + 1.2) * np.cos(f_ang)
-            fig2.add_trace(go.Scatter(x=[fx], y=[fy], mode="text", text=[nome_face], textfont=dict(color="darkgreen", size=12, weight="bold"), showlegend=False))
-
-        # 4. Posições e Rotações dos ROVs (Shape de Retângulo Direcional)
-        dist_docagem = dim_eq/2 + 2.0 
-        dist_obs = dim_eq/2 + 5.0     
-        
-        ang_f1 = eq_rad
-        ang_f2 = eq_rad + np.pi/2
-        ang_f4 = eq_rad - np.pi/2
-        
-        pos_rovs_fundo = {}
-        heading_rov = {}
-        
-        pos_rovs_fundo[rov_principal] = (x_eq + dist_docagem * np.sin(ang_f1), y_eq + dist_docagem * np.cos(ang_f1))
-        heading_rov[rov_principal] = ang_f1 + np.pi 
-        
-        ang_obs = ang_f2 if "Face 2" in face_obs else ang_f4
-        pos_rovs_fundo[rov_obs] = (x_eq + dist_obs * np.sin(ang_obs), y_eq + dist_obs * np.cos(ang_obs))
-        heading_rov[rov_obs] = ang_obs + np.pi
-
-        # 5. Plotar TMS, Tethers e ROVs
-        rov_shape = [[-1.5, -1], [1.5, -1], [1.5, 0.5], [0, 1.5], [-1.5, 0.5], [-1.5, -1]]
-
-        for rov in ["XLX-23", "XLX-24"]:
-            cor = cores[rov]
-            tms_x, tms_y = pos_fundo[rov]
-            rov_x, rov_y = pos_rovs_fundo[rov]
-            h_rov = heading_rov[rov]
-            
-            # TMS
-            fig2.add_trace(go.Scatter(x=[tms_x], y=[tms_y], mode='markers+text', marker=dict(size=14, symbol="square-open", color=cor, line=dict(width=3)), name=f"TMS {rov}", text=[f"TMS {rov}"], textposition="top center"))
-            
-            # ROV Rotacionado
-            rx_rot = [rov_x + (x*np.cos(h_rov) + y*np.sin(h_rov)) for x, y in rov_shape]
-            ry_rot = [rov_y + (-x*np.sin(h_rov) + y*np.cos(h_rov)) for x, y in rov_shape]
-            fig2.add_trace(go.Scatter(x=rx_rot, y=ry_rot, fill="toself", fillcolor=cor, line=dict(color="black"), name=f"ROV {rov}", hoverinfo="name"))
-            
-            # Tether (TMS -> ROV)
-            fig2.add_trace(go.Scatter(x=[tms_x, rov_x], y=[tms_y, rov_y], mode='lines', line=dict(color=cor, width=2, dash='dot'), name=f"Tether {rov}"))
-
-        fig2.update_layout(
-            yaxis=dict(scaleanchor="x", scaleratio=1), 
-            height=850, 
-            template="plotly_white", 
-            title="Análise de Tether Management (Com Dive Points e Umbilical na LDA)"
-        )
-        st.plotly_chart(fig2, use_container_width=True)
+                fig2.add_trace(go.Scatter(x=xf +
