@@ -1,3 +1,29 @@
+import os
+import base64
+
+# Copie a partir daqui para colocar logo no início de cada subpágina:
+current_dir = os.path.dirname(os.path.abspath(__file__))
+root_dir = os.path.dirname(current_dir) if "pages" in current_dir else current_dir
+sidebar_logo_path = os.path.join(root_dir, "image_c889bf.png")
+
+if os.path.exists(sidebar_logo_path):
+    with open(sidebar_logo_path, "rb") as f:
+        sidebar_logo_b64 = base64.b64encode(f.read()).decode()
+    st.markdown(f"""
+        <style>
+        [data-testid="stSidebarNav"]::before {{
+            content: "";
+            display: block;
+            background-image: url("data:image/png;base64,{sidebar_logo_b64}");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: center;
+            height: 70px;
+            margin: 20px 15px 10px 15px;
+        }}
+        </style>
+    """, unsafe_allow_html=True)
+
 import streamlit as st
 import datetime
 import json
