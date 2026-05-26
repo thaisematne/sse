@@ -126,7 +126,7 @@ with col3:
         </div>
     """, unsafe_allow_html=True)
     if st.button("Acessar Simulador", use_container_width=True):
-        st.switch_page("pages/3_Simulador_Tatico_de_Clash.py")
+        st.switch_page("pages/3_Simulador_Subsea.py")
 
 st.divider()
 st.caption("Versão 2026.1 | AKOFS Offshore")
