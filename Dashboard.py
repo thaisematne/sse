@@ -9,7 +9,11 @@ carregar_sidebar()
 aplicar_estilo_global()
 
 # 3. Resto do seu código
-st.title("Título da Página")
+st.set_page_config(
+    page_title="Dashboard | Subsea Planner Pro", 
+    page_icon="⚓", 
+    layout="wide",
+    initial_sidebar_state="expanded"
 )
 
 # --- 2. CONFIGURAÇÃO DA SIDEBAR (LOGO E IDENTIDADE) ---
