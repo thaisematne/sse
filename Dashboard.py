@@ -2,7 +2,9 @@ import streamlit as st
 from PIL import Image
 import os
 
-# Configuração da Página
+# ==========================================
+# 1. CONFIGURAÇÃO DA PÁGINA E ESTILO
+# ==========================================
 st.set_page_config(
     page_title="Dashboard | Subsea Planner Pro", 
     page_icon="⚓", 
@@ -10,48 +12,116 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Estilização Global
-st.markdown("""
+# Cores Corporativas AKOFS
+AKOFS_RED = "#D32F2F"
+
+# CSS para centralizar imagem e estilizar cards
+st.markdown(f"""
     <style>
-    .titulo-imponente { font-size: 3rem; font-weight: 800; color: #D32F2F; }
-    .card { background-color: #262a3d; padding: 20px; border-radius: 10px; border-top: 5px solid #D32F2F; }
+    .main {{
+        background-color: #0e1117;
+    }}
+    .titulo-imponente {{
+        font-size: 3.5rem !important;
+        font-weight: 800 !important;
+        color: {AKOFS_RED} !important;
+        text-align: center;
+        margin-top: -20px;
+    }}
+    .subtitulo-imponente {{
+        font-size: 1.5rem !important;
+        text-align: center;
+        color: #888;
+        margin-bottom: 2rem;
+    }}
+    .modulo-card {{
+        background-color: #1e2130;
+        padding: 30px;
+        border-radius: 15px;
+        border-top: 6px solid {AKOFS_RED};
+        height: 250px;
+        text-align: center;
+        margin-bottom: 10px;
+    }}
     </style>
 """, unsafe_allow_html=True)
 
-# 1. LOGO NO TOPO DA PÁGINA (Capa)
+# ==========================================
+# 2. LOGO CENTRALIZADO NO TOPO
+# ==========================================
 current_dir = os.path.dirname(os.path.abspath(__file__))
 logo_path = os.path.join(current_dir, "image_c88946.jpg")
 
-if os.path.exists(logo_path):
-    st.image(logo_path, width=300) # Logo no topo da página
-else:
-    st.markdown("## 🔴 AKOFS Offshore")
+# Centralização da imagem usando colunas
+col_img1, col_img2, col_img3 = st.columns([1, 2, 1])
+with col_img2:
+    if os.path.exists(logo_path):
+        st.image(logo_path, use_container_width=True)
+    else:
+        st.markdown(f"<h1 style='text-align: center; color: {AKOFS_RED};'>🔴 AKOFS</h1>", unsafe_allow_html=True)
 
-# 2. CABEÇALHO
+# ==========================================
+# 3. CABEÇALHO PRINCIPAL
+# ==========================================
 st.markdown('<h1 class="titulo-imponente">Subsea Planner Pro</h1>', unsafe_allow_html=True)
-st.subheader("Central de Gestão Operacional | AKOFS Offshore")
-st.write(f"Bem-vinda, **Thaís**. Este é o seu painel de controle executivo.")
+st.markdown('<p class="subtitulo-imponente">Central de Gestão Operacional | AKOFS Offshore</p>', unsafe_allow_html=True)
 
+st.write(f"Bem-vinda, **Thaís**. Selecione abaixo a ferramenta desejada para iniciar as operações.")
 st.divider()
 
-# 3. MÓDULOS REAIS
-st.markdown("## 🛠️ Módulos de Operação")
-
+# ==========================================
+# 4. MÓDULOS HABILITADOS
+# ==========================================
 col1, col2, col3 = st.columns(3)
 
 with col1:
-    st.markdown('<div class="card"><h3>⏱️ Cronograma de Prontidão</h3><p>Gerenciamento de etapas e cronograma operacional.</p></div>', unsafe_allow_html=True)
-    if st.button("Acessar Cronograma"):
+    st.markdown("""
+        <div class="modulo-card">
+            <h2>⏱️</h2>
+            <h3>Cronograma de Prontidão</h3>
+            <p>Gerenciamento de etapas operacionais e previsões de prontidão.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    if st.button("Acessar Cronograma", use_container_width=True, type="primary"):
         st.switch_page("pages/1_Cronograma_de_Prontidao.py")
 
 with col2:
-    st.markdown('<div class="card"><h3>🔏 Validação de Seal Test</h3><p>Módulo dedicado à conferência e validação dos testes de vedação.</p></div>', unsafe_allow_html=True)
-    st.button("Acessar Seal Test", disabled=True)
+    st.markdown("""
+        <div class="modulo-card">
+            <h2>🔏</h2>
+            <h3>Validação de Seal Test</h3>
+            <p>Conferência técnica e validação de testes de vedação subsea.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    # Certifique-se de que o arquivo abaixo existe na pasta pages/
+    if st.button("Acessar Seal Test", use_container_width=True):
+        try:
+            st.switch_page("pages/2_Validacao_de_Seal_Test.py")
+        except:
+            st.error("Página de Seal Test ainda não criada.")
 
 with col3:
-    st.markdown('<div class="card"><h3>⚙️ Simulador</h3><p>Ferramenta de simulação de cenários operacionais subsea.</p></div>', unsafe_allow_html=True)
-    st.button("Acessar Simulador", disabled=True)
+    st.markdown("""
+        <div class="modulo-card">
+            <h2>⚙️</h2>
+            <h3>Simulador</h3>
+            <p>Simulação de cenários e tempos operacionais críticos.</p>
+        </div>
+    """, unsafe_allow_html=True)
+    # Certifique-se de que o arquivo abaixo existe na pasta pages/
+    if st.button("Acessar Simulador", use_container_width=True):
+        try:
+            st.switch_page("pages/3_Simulador.py")
+        except:
+            st.error("Página do Simulador ainda não criada.")
 
-# Sidebar (Limpa, apenas navegação)
-st.sidebar.markdown("### Navegação")
-st.sidebar.write("Use os botões acima ou o menu lateral.")
+st.divider()
+st.caption("Versão 2026.1 | AKOFS Offshore")
+
+# ==========================================
+# 5. SIDEBAR (LOGOTIPO NO TOPO)
+# ==========================================
+if os.path.exists(logo_path):
+    st.sidebar.image(logo_path, use_container_width=True)
+st.sidebar.markdown("---")
+st.sidebar.markdown("### Navegação Rápida")
