@@ -22,16 +22,23 @@ else:
 
 st.sidebar.markdown("---")
 
-# Conteúdo do Dashboard
+# --- CONTEÚDO DO DASHBOARD ---
 st.title("Subsea Planner Pro")
 st.subheader("Bem-vinda, Thaís")
 
-# Manter a estrutura do seu dashboard anterior aqui
-# Exemplo básico:
+# Exemplo da estrutura de descrição dos módulos que você usava
+st.markdown("""
+### Módulos do Sistema
+Utilize o menu lateral para navegar entre as ferramentas de gestão:
+- **Cronograma de Prontidão:** Planejamento e acompanhamento de etapas operacionais.
+- **Gestão de PTW:** Controle de permissões de trabalho e conformidade.
+- **KPIs Operacionais:** Monitoramento de indicadores de performance subsea.
+""")
+
 col1, col2 = st.columns(2)
 with col1:
-    st.write("Acesse os módulos através do menu lateral.")
+    st.info("Sistema de Gestão de Processos Offshore")
 with col2:
-    st.info("Sistema de Gestão Offshore")
+    st.write("Versão 2026.1 - AKOFS Offshore")
 
 # Adicione aqui os demais componentes que você tinha no seu dashboard anterior
