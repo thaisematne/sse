@@ -1,22 +1,15 @@
 import streamlit as st
-from PIL import Image
-import os
+from utils import carregar_sidebar, aplicar_estilo_global
 
-# 1. FORÇAR O CAMINHO ABSOLUTO DAS IMAGENS
-# Isso garante que o Streamlit ache as imagens na mesma pasta do app.py
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-LOGO_PATH = os.path.join(BASE_DIR, "image_c889bf.png")
-VESSEL_PATH = os.path.join(BASE_DIR, "image_c88946.jpg")
+# 1. Configuração da página (deve ser sempre o primeiro comando Streamlit)
+st.set_page_config(page_title="Seu Título", layout="wide")
 
-# Definição de Cores Corporativas AKOFS
-AKOFS_RED = "#D32F2F"
-TEXT_WHITE = "#FAFAFA"
+# 2. Carrega os elementos visuais padronizados
+carregar_sidebar()
+aplicar_estilo_global()
 
-st.set_page_config(
-    page_title="Dashboard | Subsea Planner Pro", 
-    page_icon="⚓", 
-    layout="wide",
-    initial_sidebar_state="expanded"
+# 3. Resto do seu código
+st.title("Título da Página")
 )
 
 # --- 2. CONFIGURAÇÃO DA SIDEBAR (LOGO E IDENTIDADE) ---
