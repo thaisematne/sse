@@ -115,7 +115,7 @@ with col2:
         </div>
     """, unsafe_allow_html=True)
     if st.button("Acessar Seal Test", use_container_width=True):
-        st.switch_page("pages/2_Validacao_de_Seal_Test.py")
+        st.switch_page("pages/2_Validação_do_Seal_Test.py")
 
 with col3:
     st.markdown("""
