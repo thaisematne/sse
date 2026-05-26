@@ -8,7 +8,7 @@ import base64
 # 0. CONFIGURAÇÃO DA PÁGINA E LOGO NO MENU
 # ==========================================
 st.set_page_config(
-    page_title="Simulador Tático de Clash | Subsea Planner Pro", 
+    page_title="Simulador Subsea | Subsea Planner Pro", 
     page_icon="⚓", 
     layout="wide",
     initial_sidebar_state="expanded"
@@ -43,7 +43,7 @@ if os.path.exists(sidebar_logo_path):
 # ==========================================
 AKOFS_RED = "#D32F2F"
 st.markdown(f"<h1 style='color: {AKOFS_RED};'>Subsea Planner Pro</h1>", unsafe_allow_html=True)
-st.markdown("### Simulador Tático de Clash")
+st.markdown("### Simulador Subsea")
 st.divider()
 
 # ==========================================
